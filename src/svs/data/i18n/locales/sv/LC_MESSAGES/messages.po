@@ -1,0 +1,113 @@
+# Northern Sami translations for InAcademia.
+# Copyright (C) 2014 ORGANIZATION
+# This file is distributed under the same license as the InAcademia project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2014.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: InAcademia 0.1.0\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2014-12-11 11:07+0100\n"
+"PO-Revision-Date: 2014-12-11 11:09+0100\n"
+"Last-Translator: Rebecka Gulliksson <rebecka.gulliksson@umu.se>\n"
+"Language-Team: InAcademia <tech@inacademia.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.3\n"
+"Language: sv\n"
+"X-Generator: Poedit 1.7.1\n"
+
+#: src/svs/inacademia_server.py:228 src/svs/inacademia_server.py:568
+#: src/svs/inacademia_server.py:586
+msgid "Page not found."
+msgstr "Sidan kunde inte hittas."
+
+#: src/svs/inacademia_server.py:233
+msgid "error_key"
+msgstr ""
+
+#: src/svs/inacademia_server.py:259 src/svs/inacademia_server.py:505
+msgid "error_general"
+msgstr ""
+
+#: src/svs/inacademia_server.py:516
+msgid "error_non_edugain_idp"
+msgstr ""
+
+#: src/svs/inacademia_server.py:516 src/svs/inacademia_server.py:543
+msgid "solution_contact_idp"
+msgstr ""
+
+#: src/svs/inacademia_server.py:525
+msgid "error_idp_error"
+msgstr ""
+
+#: src/svs/inacademia_server.py:543
+msgid "error_user_not_authenticated"
+msgstr ""
+
+#: src/svs/inacademia_server.py:547
+msgid "error_incorrect_saml_response"
+msgstr ""
+
+#: src/svs/inacademia_server.py:591 src/svs/inacademia_server.py:635
+msgid "consent_question"
+msgstr "{rp_display_name} kräver att nedanstående information överförs."
+
+#: src/svs/inacademia_server.py:681
+msgid "domain"
+msgstr "domän"
+
+#: src/svs/inacademia_server.py:686
+msgid "country"
+msgstr "land"
+
+#: src/svs/inacademia_server.py:706
+msgid "affiliation"
+msgstr "anknytning"
+
+#: src/svs/inacademia_server.py:706
+msgid "identifier"
+msgstr "identifierare"
+
+#: src/svs/inacademia_server.py:706
+msgid "authentication time"
+msgstr "tid för autentisering"
+
+#: src/svs/user_interaction.py:16
+msgid "Please return to the service you were using and try again."
+msgstr "Var vänlig återgå till tjänsten du försökte använda och försök igen."
+
+#: src/svs/templates/base_with_i18n.mako:46 src/svs/templates/consent.mako:83
+#: src/svs/templates/error.mako:71
+msgid "Terms of service"
+msgstr "Villkor för tjänsten"
+
+#: src/svs/templates/consent.mako:39
+msgid "Consent - Your consent is required to continue."
+msgstr "Medgivande - Ditt medgivande krävs för att fortsätta."
+
+#: src/svs/templates/consent.mako:62
+msgid "Ok, accept"
+msgstr "Ok, acceptera"
+
+#: src/svs/templates/consent.mako:67
+msgid "No, cancel"
+msgstr "Nej, avbryt"
+
+#: src/svs/templates/error.mako:26
+msgid "Error - An error occurred."
+msgstr "Fel - Ett fel inträffade."
+
+#: src/svs/templates/error.mako:53
+msgid "Timestamp"
+msgstr "Tidstämpel"
+
+#: src/svs/templates/error.mako:58
+msgid "Error id"
+msgstr "Fel id"
+
+#~ msgid "Hello world!"
+#~ msgstr "Hej världen!"
