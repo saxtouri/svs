@@ -9,7 +9,7 @@ import time
 import cherrypy
 from oic.utils.http_util import Redirect, SeeOther
 from oic.utils.time_util import str_to_time
-from oic.utils.clientdb import MDQClient, NoClientInfoReceived
+from oic.utils.clientdb import MDQClient, NoClientInfoReceivedError
 from oic.oauth2.message import MissingRequiredAttribute
 from oic.oic.message import AuthorizationRequest, AuthorizationResponse, AuthorizationErrorResponse
 from oic.oic.provider import Provider
@@ -400,8 +400,15 @@ class InAcademiaOIDCProvider(object):
         if "redirect_uri" in session:
             _ruri = session["redirect_uri"]
         else:
-            cinfo = self.OP.cdb[session["client_id"]]
-            _ruri = cinfo["redirect_uris"][0]
+            try:
+                cinfo = self.OP.cdb[session["client_id"]]
+                _ruri = cinfo["redirect_uris"][0]
+            except NoClientInfoReceivedError as e:
+                t = now()
+                uid = get_new_error_uid()
+                _log_msg = "Unknown RP client id '{}': '{}'.".format(session["client_id"], str(e))
+                log_transaction_fail(logger, cherrypy.request, "-", _log_msg, timestamp=t, uid=uid)
+                raise EndUserErrorResponse(t, uid, "error_general", _("error_general"))
 
         location = authzresp.request(_ruri, True)
         logger.debug("Redirected to: '%s' (%s)" % (location, type(location)))
@@ -461,10 +468,10 @@ class InAcademiaOIDCProvider(object):
         # Verify it's a client_id I recognize
         try:
             cinfo = self.OP.cdb[client_id]
-        except NoClientInfoReceived:
+        except NoClientInfoReceivedError as e:
             t = now()
             uid = get_new_error_uid()
-            _log_msg = "Unknown RP client id '{}'.".format(client_id)
+            _log_msg = "Unknown RP client id '{}': '{}'.".format(client_id, str(e))
             log_transaction_fail(logger, cherrypy.request, "-", _log_msg, timestamp=t, uid=uid)
             raise EndUserErrorResponse(t, uid, "error_general", _("error_general"))
 
