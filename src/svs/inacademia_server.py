@@ -10,13 +10,12 @@ import cherrypy
 from oic.utils.http_util import Redirect, SeeOther
 from oic.utils.time_util import str_to_time
 from oic.utils.clientdb import MDQClient, NoClientInfoReceivedError
-from oic.oauth2.message import MissingRequiredAttribute
 from oic.oic.message import AuthorizationRequest, AuthorizationResponse, AuthorizationErrorResponse
 from oic.oic.provider import Provider
 from oic.utils.keyio import KeyBundle, KeyJar, keybundle_from_local_file, dump_jwks
 from oic.utils.webfinger import WebFinger, OIC_ISSUER
 from saml2.config import SPConfig
-from saml2.httpbase import HTTPBase
+from saml2.httpbase import HTTPBase, ConnectionError
 from saml2.mdstore import MetaDataMDX
 from saml2.response import DecryptionFailed
 from saml2 import BINDING_HTTP_POST, BINDING_HTTP_REDIRECT, saml
@@ -32,8 +31,8 @@ from .i18n_tool import ugettext as _
 from .sp_metadata import make_metadata, PERSISTENT_SP_KEY, TRANSIENT_SP_KEY
 from .filter import AFFILIATIONS, PERSISTENT_NAMEID, TRANSIENT_NAMEID, get_affiliation_function, get_name_id, COUNTRY, \
     DOMAIN, AFFILIATION_ATTRIBUTE
-from .log_utils import log_transaction_fail, log_transaction_start, log_transaction_idp, log_internal, \
-    log_transaction_success, log_transaction_aborted
+from .log_utils import log_transaction_fail, log_transaction_start, log_transaction_idp, log_transaction_complete, \
+    log_negative_transaction_complete, log_internal
 from .saml import SamlSp, AuthnFailure
 from .saml import ServiceErrorException
 from .utils import get_timestamp, sha1_entity_transform, deconstruct_state, now, get_new_error_uid, \
@@ -167,17 +166,41 @@ def main():
     cherrypy.engine.block()
 
 
-def _error(redirect_uri, err, descr=None):
+def _log_fail(log_msg, transaction_id, client_id):
+    t = now()
+    uid = get_new_error_uid()
+    log_transaction_fail(logger, cherrypy.request, transaction_id, client_id, log_msg, timestamp=t, uid=uid)
+    return t, uid
+
+
+def _client_error_message(redirect_uri, error="access_denied", error_description=""):
+    error_resp = AuthorizationErrorResponse(error=error, error_description=error_description)
+    location = error_resp.request(redirect_uri, True)
+    raise cherrypy.HTTPRedirect(location)
+
+
+def negative_transaction_response(transaction_id, session, message, idp_entity_id):
+    _elapsed_transaction_time = get_timestamp() - session["start_time"]
+    log_negative_transaction_complete(logger, cherrypy.request, transaction_id, session["client_id"], idp_entity_id,
+                                      now(), _elapsed_transaction_time, message)
+    _client_error_message(session["redirect_uri"], message)
+
+
+def abort_with_enduser_error(transaction_id, client_id, log_msg):
+    t, uid = _log_fail(log_msg, transaction_id, client_id)
+    raise EndUserErrorResponse(t, uid, "error_general", _("error_general"))
+
+
+def abort_with_client_error(transaction_id, session, log_msg, error="access_denied", error_description=""):
     """
     Construct an error response.
 
-    :param err: OpenID Connect error code
-    :param descr: error message string
+    :param error: OpenID Connect error code
+    :param error_description: error message string
     :return: raises cherrypy.HTTPRedirect to send the error to the RP.
     """
-    error_resp = AuthorizationErrorResponse(error=err, error_description=descr)
-    location = error_resp.request(redirect_uri, True)
-    raise cherrypy.HTTPRedirect(location)
+    _log_fail(log_msg, transaction_id, session["client_id"])
+    _client_error_message(session["redirect_uri"], error, error_description)
 
 
 def _response_to_cherrypy(response):
@@ -253,11 +276,16 @@ class InAcademiaServer(object):
         """
         # TODO handle "error in kwargs" - show error page or notify RP
 
-        if state is None or entityID is None:
+        if state is None:
             raise cherrypy.HTTPError(404, _('Page not found.'))
 
-        decoded_state = self.decode_state(state)
-        return self.sp.disco(entityID, state, decoded_state)
+        session = self.decode_state(state)
+        if "error" in kwargs:
+            abort_with_client_error(state, session, "Discovery service error: '{}'.".format(kwargs["error"]))
+        elif entityID is None or entityID == "":
+            abort_with_client_error(state, session, "No entity id returned from discovery server.")
+
+        return self.sp.disco(entityID, state, session)
 
     @cherrypy.expose
     def error(self, lang=None, error=None):
@@ -288,11 +316,7 @@ class InAcademiaServer(object):
             # Verify the state encryption
             return deconstruct_state(state, self.key_bundle.keys())
         except DecryptionFailed as e:
-            t = now()
-            uid = get_new_error_uid()
-            _log_msg = "Transaction state missing or broken in incoming response."
-            log_transaction_fail(logger, cherrypy.request, "-", _log_msg, timestamp=t, uid=uid)
-            raise EndUserErrorResponse(t, uid, "error_general", _("error_general"))
+            abort_with_enduser_error(state, "-", "Transaction state missing or broken in incoming response.")
 
     def encode_state(self, payload):
         _kids = self.key_bundle.kids()
@@ -386,8 +410,8 @@ class InAcademiaOIDCProvider(object):
                                               extra_claims=extra_claims)
 
         _elapsed_transaction_time = get_timestamp() - session["start_time"]
-        log_transaction_success(logger, cherrypy.request, encoded_state, session["client_id"], idp_entity_id,
-                                _time, extra_claims, _jwt, _elapsed_transaction_time)
+        log_transaction_complete(logger, cherrypy.request, encoded_state, session["client_id"], idp_entity_id,
+                                 _time, extra_claims, _jwt, _elapsed_transaction_time)
 
         try:
             _state = session["state"]
@@ -404,11 +428,8 @@ class InAcademiaOIDCProvider(object):
                 cinfo = self.OP.cdb[session["client_id"]]
                 _ruri = cinfo["redirect_uris"][0]
             except NoClientInfoReceivedError as e:
-                t = now()
-                uid = get_new_error_uid()
-                _log_msg = "Unknown RP client id '{}': '{}'.".format(session["client_id"], str(e))
-                log_transaction_fail(logger, cherrypy.request, "-", _log_msg, timestamp=t, uid=uid)
-                raise EndUserErrorResponse(t, uid, "error_general", _("error_general"))
+                abort_with_enduser_error(encoded_state, decoded_state["client_id"],
+                                         "Unknown RP client id '{}': '{}'.".format(session["client_id"], str(e)))
 
         location = authzresp.request(_ruri, True)
         logger.debug("Redirected to: '%s' (%s)" % (location, type(location)))
@@ -444,63 +465,54 @@ class InAcademiaOIDCProvider(object):
         """
         try:
             areq = self.OP.server.parse_authorization_request(query=query_string)
-        except MissingRequiredAttribute as err:
-            log_internal(logger, str(err), cherrypy.request)
-            # _error("invalid_request", "%s" % err)
         except KeyError:
-            areq = AuthorizationRequest().deserialize(query_string, "urlencoded")
-        except Exception as err:
-            _log_msg = "The authentication request could not be processed: {}".format(str(err))
-            log_transaction_aborted(logger, cherrypy.request, _log_msg)
-            # _error("invalid_request", "The authentication request could not be processed")
-
-        client_id = areq["client_id"]
-        scope = areq["scope"]
-
-        # Verify that the response_type if present is id_token
-        try:
-            assert areq["response_type"] == ["id_token"]
-        except (KeyError, AssertionError) as err:  # has to be there and match
-            _log_msg = "Unsupported response_type '{}'".format(areq["response_type"])
-            log_transaction_aborted(logger, cherrypy.request, _log_msg, client_id)
-            # _error("unsupported_response_type", "Unsupported response_type, must be id_token")
+            try:
+                areq = AuthorizationRequest().deserialize(query_string, "urlencoded")
+            except Exception as e:
+                abort_with_enduser_error("-", "-",
+                                         "The authentication request could not be processed: {}".format(str(e)))
+        except Exception as e:
+            abort_with_enduser_error("-", "-", "The authentication request could not be processed: {}".format(str(e)))
 
         # Verify it's a client_id I recognize
         try:
-            cinfo = self.OP.cdb[client_id]
+            cinfo = self.OP.cdb[areq["client_id"]]
         except NoClientInfoReceivedError as e:
-            t = now()
-            uid = get_new_error_uid()
-            _log_msg = "Unknown RP client id '{}': '{}'.".format(client_id, str(e))
-            log_transaction_fail(logger, cherrypy.request, "-", _log_msg, timestamp=t, uid=uid)
-            raise EndUserErrorResponse(t, uid, "error_general", _("error_general"))
-
-        if not self._verify_scope(scope):
-            _log_msg = "Invalid scope '{}'".format(scope)
-            log_transaction_aborted(logger, cherrypy.request, _log_msg, client_id)
-            # _error("invalid_scope", "Invalid scope")
+            abort_with_enduser_error("-", "-", "Unknown RP client id '{}': '{}'.".format(areq["client_id"], str(e)))
 
         # verify that the redirect_uri is sound
         if "redirect_uri" not in areq:
-            _log_msg = "Missing redirect URI."
-            log_transaction_aborted(logger, cherrypy.request, _log_msg, client_id)
+            abort_with_enduser_error("-", "-", "Missing redirect URI in authentication request.")
             # _error("invalid_request", "Missing redirect URI")
         elif areq["redirect_uri"] not in cinfo["redirect_uris"]:
-            _log_msg = "Unknown redirect URI '{}' not in '{}'".format(areq["redirect_uri"], cinfo["redirect_uris"])
-            log_transaction_aborted(logger, cherrypy.request, _log_msg, client_id)
-            # _error("invalid_request", "Unknown redirect URI")
+            abort_with_enduser_error("-", "-",
+                                     "Unknown redirect URI in authentication request: '{}' not in '{}'".format(
+                                         areq["redirect_uri"],
+                                         cinfo["redirect_uris"]))
 
         # Create the state variable
         session = {
-            "client_id": client_id,
+            "client_id": areq["client_id"],
             "nonce": areq["nonce"],
-            "scope": scope,
+            "scope": areq["scope"],
             "redirect_uri": areq["redirect_uri"],
             "start_time": get_timestamp()
         }
 
         if "state" in areq:
             session["state"] = areq["state"]
+
+        # Verify that the response_type if present is id_token
+        try:
+            assert areq["response_type"] == ["id_token"]
+        except (KeyError, AssertionError) as err:  # has to be there and match
+            abort_with_client_error("-", session, "Unsupported response_type '{}'".format(areq["response_type"]),
+                                    error="unsupported_response_type",
+                                    error_description="Only response_type 'id_token' is supported.")
+
+        if not self._verify_scope(areq["scope"]):
+            abort_with_client_error("-", session, "Invalid scope '{}'".format(areq["scope"]), error="invalid_scope",
+                                    error_description="The specified scope '{}' is not valid.".format(areq["scope"]))
 
         return session
 
@@ -555,10 +567,6 @@ class InAcademiaSAMLServiceProvider(object):
 
     def disco(self, entityID, encoded_state, decoded_state):
         sp = self._choose_service_provider(decoded_state["scope"])
-        if entityID == "":  # none was chosen return an error message
-            log_transaction_fail(logger, cherrypy.request, encoded_state,
-                                 "No IdP entity id returned from the discovery server.", decoded_state["client_id"])
-            raise EndUserErrorResponse(0, 0, "error_general", _("error_general"))
 
         # check if the IdP is part of edugain
         parsed = urlparse.urlparse(entityID)
@@ -584,8 +592,12 @@ class InAcademiaSAMLServiceProvider(object):
         try:
             return _response_to_cherrypy(sp.redirect_to_auth(idp_entity_id, encoded_state))
         except ServiceErrorException as e:
-            log_transaction_fail(logger, cherrypy.request, encoded_state, str(e), decoded_state["client_id"])
-            raise EndUserErrorResponse(0, 0, "error_idp_error", _("error_idp_error"))
+            abort_with_client_error(encoded_state, decoded_state,
+                                    "Could not create SAML authentication request: '{}'.".format(str(e)),
+                                    error_description="Validation could not be completed.")
+        except ConnectionError as e:
+            abort_with_client_error(encoded_state, decoded_state, "Could not contact SAML MDQ: '{}'.".format(str(e)),
+                                    error_description="Validation could not be completed.")
 
     def acs(self, SAMLResponse, binding, encoded_state, decoded_state):
         """
@@ -599,25 +611,24 @@ class InAcademiaSAMLServiceProvider(object):
             log_internal(logger, "saml_response name_id={}".format(str(name_id).replace("\n", "")),
                          environ=cherrypy.request, transaction_id=encoded_state, client_id=decoded_state["client_id"])
         except AuthnFailure:
-            log_transaction_fail(logger, cherrypy.request, encoded_state, "User not authenticated at IdP",
-                                 decoded_state["client_id"])
-            raise EndUserErrorResponse(0, 0, "error_user_not_authenticated", _("error_user_not_authenticated"),
-                                       _("solution_contact_idp"))
+            abort_with_client_error(encoded_state, decoded_state, "User not authenticated at IdP.")
         except Exception as e:
-            _log_msg = "Incorrect SAML Response from IdP: '{}'".format(str(e))
-            log_transaction_fail(logger, cherrypy.request, encoded_state, _log_msg, decoded_state["client_id"])
-            raise EndUserErrorResponse(0, 0, "error_incorrect_saml_response", _("error_incorrect_saml_response"))
+            abort_with_client_error(encoded_state, decoded_state,
+                                    "Incorrect SAML Response from IdP: '{}'".format(str(e)))
 
         has_correct_affiliation = get_affiliation_function(scope)
 
         if not has_correct_affiliation(identity):
-            return _error(decoded_state["redirect_uri"], "access_denied",
-                          "The user does not have the correct affiliation.")
+            negative_transaction_response(encoded_state,
+                                          decoded_state, "The user does not have the correct affiliation.",
+                                          idp_entity_id)
 
         _user_id = get_name_id(name_id, identity, scope)
         if _user_id is None:
-            return _error(decoded_state["redirect_uri"], "access_denied",
-                          "The users identity could not be provided.")
+            negative_transaction_response(encoded_state,
+                                          decoded_state,
+                                          "The users identity could not be provided.",
+                                          idp_entity_id)
 
         return _user_id, identity, auth_time, idp_entity_id
 
@@ -643,9 +654,8 @@ class ConsentHandler(object):
 
         state = json.loads(urllib.unquote_plus(state))
         decoded_state = self.server.decode_state(state["state"])
-        log_transaction_fail(logger, cherrypy.request, state["state"], "No consent given by user.",
-                             decoded_state["client_id"])
-        _error(decoded_state["redirect_uri"], "access_denied", "User did not give consent.")
+        negative_transaction_response(state["state"], decoded_state, "User did not give consent.",
+                                      state["idp_entity_id"])
 
     @cherrypy.expose
     def index(self, lang=None, state=None, released_attributes=None):
@@ -658,7 +668,8 @@ class ConsentHandler(object):
         rp_client_id = self.server.decode_state(state["state"])["client_id"]
         released_attributes = json.loads(urllib.unquote_plus(released_attributes))
 
-        return self.server.make_consent_page(rp_client_id, state["idp_entity_id"], released_attributes, state["state"])
+        return self.server.make_consent_page(rp_client_id, state["idp_entity_id"], released_attributes,
+                                             state["state"])
 
 
 class AssertionConsumerServiceHandler(object):

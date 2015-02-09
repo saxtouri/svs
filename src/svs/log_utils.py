@@ -8,10 +8,17 @@ def log_transaction_start(logger, environ, transaction_id, client_id, scope, red
     _log_transaction(logger, environ, transaction_id, client_id, msg)
 
 
-def log_transaction_success(logger, environ, transaction_id, client_id, idp_entity_id, auth_time, extra_claims,
-                            id_token, elapsed_transaction_time):
-    msg = "transaction_complete idp={} auth_time={} extra_claims={} id_token={} elapsed_transaction_time={}".format(
-        idp_entity_id, auth_time, extra_claims, id_token, elapsed_transaction_time)
+def log_transaction_complete(logger, environ, transaction_id, client_id, idp_entity_id, auth_time,
+                             elapsed_transaction_time, extra_claims, id_token):
+    msg = "transaction_complete idp={} auth_time={} elapsed_transaction_time={} extra_claims={} id_token={} ".format(
+        idp_entity_id, auth_time, elapsed_transaction_time, extra_claims, id_token)
+    _log_transaction(logger, environ, transaction_id, client_id, msg)
+
+
+def log_negative_transaction_complete(logger, environ, transaction_id, client_id, idp_entity_id, auth_time,
+                                      elapsed_transaction_time, message):
+    msg = "negative_transaction_complete idp={} auth_time={} elapsed_transaction_time={} message={}".format(
+        idp_entity_id, auth_time, elapsed_transaction_time, message)
     _log_transaction(logger, environ, transaction_id, client_id, msg)
 
 
@@ -20,7 +27,7 @@ def log_transaction_idp(logger, environ, transaction_id, client_id, idp):
     _log_transaction(logger, environ, transaction_id, client_id, msg)
 
 
-def log_transaction_fail(logger, environ, transaction_id, message, client_id="-", timestamp=None, uid=None):
+def log_transaction_fail(logger, environ, transaction_id, client_id, message, timestamp=None, uid=None):
     if timestamp is None:
         timestamp = now()
     if uid is None:
@@ -28,12 +35,6 @@ def log_transaction_fail(logger, environ, transaction_id, message, client_id="-"
 
     msg = "transaction_failed t={} uid={} {}".format(timestamp, uid, message)
     _log_transaction(logger, environ, transaction_id, client_id, msg)
-
-
-def log_transaction_aborted(logger, environ, message, client_id="-"):
-    msg = "transaction_aborted {}".format(message)
-    _log_transaction(logger, environ, "-", client_id, msg)
-
 
 def log_internal(logger, message, environ, transaction_id="-", client_id="-"):
     if environ is not None:
@@ -43,7 +44,6 @@ def log_internal(logger, message, environ, transaction_id="-", client_id="-"):
 
     msg = "{} {} {} {}".format(prefix, client_id, message, transaction_id)
     logger.debug(msg)
-
 
 def _log_transaction(logger, environ, transaction_id, client_id, message):
     msg = "{} {} {} {}".format(_get_clf_prefix_string(environ), client_id, message, transaction_id)
