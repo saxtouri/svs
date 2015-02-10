@@ -32,4 +32,5 @@ setup(name='svs',
               ('**/templates/**.mako', 'mako', None)
           ]
       },
+      tests_require=["pytest", "mock"],
 )

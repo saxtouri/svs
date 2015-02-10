@@ -37,23 +37,19 @@ def get_name_id(name_id_from_idp, identity, scope):
     :param scope: requested scope from the RP
     :return: the name id from the IdP or None if an incorrect or no name id at all was returned from the IdP.
     """
-    name_id = None
     if PERSISTENT_NAMEID in scope:
         # Use one of NameID (if persistent) or EPTID or EPPN in that order
         if name_id_from_idp.format == NAMEID_FORMAT_PERSISTENT:
-            name_id = name_id_from_idp.text
+            return name_id_from_idp.text
         else:
             for key in ['eduPersonTargetedID', 'eduPersonPrincipalName']:
                 if key in identity:
-                    name_id = identity[key][0]
-                    break
+                    return identity[key][0]
     else:
         if name_id_from_idp.format == NAMEID_FORMAT_TRANSIENT:
-            name_id = name_id_from_idp.text  # TODO is this transient name id really unique for each session?
-        else:
-            pass
+            return name_id_from_idp.text
 
-    return name_id
+    return None
 
 
 def _is_student(identity):
@@ -61,7 +57,7 @@ def _is_student(identity):
 
 
 def _is_member(identity):
-    return 'member' in identity[AFFILIATION_ATTRIBUTE]
+    return 'member' in _get_affiliation_attribute(identity)
 
 
 def _is_faculty_or_staff(identity):
