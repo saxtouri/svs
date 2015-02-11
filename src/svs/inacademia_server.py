@@ -69,13 +69,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--mdx", dest="mdx", required=True, type=str, help="base url to the MDX server")
     parser.add_argument("--cdb", dest="cdb", required=True, type=str, help="base url to the client database server")
+    parser.add_argument("--disco", dest="disco_url", type=str, help="base url to the discovery server")
     parser.add_argument("-b", dest="base", required=True, type=str, help="base url for the service")
     parser.add_argument("-H", dest="host", default="0.0.0.0", type=str, help="host for the service")
     parser.add_argument("-p", dest="port", default=8087, type=int, help="port for the service to listen on")
-
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--disco", dest="disco_url", type=str, help="base url to the discovery server")
-    group.add_argument("--idp", dest="idp_entity_id", type=str, help="base url to the discovery server")
 
     args = parser.parse_args()
 
@@ -117,7 +114,7 @@ def main():
         base_url += "/"
 
     OP = InAcademiaOIDCProvider(base_url, ClientDB)
-    SP = InAcademiaSAMLServiceProvider(base_url, MetadataFunc, args.disco_url, args.idp_entity_id)
+    SP = InAcademiaSAMLServiceProvider(base_url, MetadataFunc, args.disco_url)
     inacademia = InAcademiaServer(base_url, OP, SP, ClientDB, MetadataFunc)
 
 
@@ -522,9 +519,7 @@ class InAcademiaSAMLServiceProvider(object):
     The SAML Service Provider part of InAcademia.
     """
 
-    def __init__(self, base_url, idp_metadata_func, disco_url, idp_entity_id):
-        self.idp_entity_id = idp_entity_id
-
+    def __init__(self, base_url, idp_metadata_func, disco_url):
         self.SP = {}
         sp_configs = make_metadata(base_url)
         for sp_key in [TRANSIENT_SP_KEY, PERSISTENT_SP_KEY]:
@@ -539,16 +534,8 @@ class InAcademiaSAMLServiceProvider(object):
         :return:
         """
         sp = self._choose_service_provider(scope)
-
-        if sp.disco_srv is not None:
-            location = sp.disco_query(state)
-            raise cherrypy.HTTPRedirect(location, 303)
-        else:  # go direct to the IdP
-            entity_id = self.idp_entity_id
-            resp = sp.redirect_to_auth(entity_id, state)
-
-        return _response_to_cherrypy(resp)
-
+        location = sp.disco_query(state)
+        raise cherrypy.HTTPRedirect(location, 303)
 
     def _choose_service_provider(self, scope):
         """
