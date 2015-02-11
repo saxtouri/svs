@@ -1,4 +1,3 @@
-import base64
 import hashlib
 import json
 import uuid
@@ -13,10 +12,6 @@ __author__ = 'roland'
 
 def sha1_entity_transform(entity_id):
     return "{{sha1}}{}".format(hashlib.sha1(entity_id).hexdigest())
-
-
-def base64_entity_transform(entity_id):
-    return "{{base64}}{}".format(base64.b64encode(entity_id))
 
 
 def construct_state(payload, key, alg="A128KW", enc="A128CBC-HS256"):
