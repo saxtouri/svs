@@ -1,6 +1,5 @@
 import logging
 
-from oic.oauth2 import VerificationError
 from oic.utils.http_util import SeeOther
 from oic.utils.http_util import Response
 from saml2.client_base import Base
@@ -10,8 +9,6 @@ from saml2.samlp import NameIDPolicy
 from saml2.time_util import instant
 from saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST
 from saml2.s_utils import sid
-from saml2.s_utils import UnknownPrincipal
-from saml2.s_utils import UnsupportedBinding
 
 from log_utils import log_internal
 
@@ -131,25 +128,15 @@ class SamlSp(object):
         """
 
         if not SAMLResponse:
-            logger.info("Missing Response")
+            log_internal(logger, "Auhtentication response from IdP is missing (maybe authn failure.", None)
             raise AuthnFailure("You are not authorized!")
 
         try:
             _response = self.sp.parse_authn_request_response(SAMLResponse, binding)
-        except UnknownPrincipal as exp:
-            logger.error("UnknownPrincipal: %s" % (exp,))
-            raise
-        except UnsupportedBinding as exp:
-            logger.error("UnsupportedBinding: %s" % (exp,))
-            raise
-        except VerificationError as err:
-            logger.error("Verification error: %s" % (err,))
-            raise
-        except Exception as err:
-            logger.error("Other error: %s" % (err,))
-            raise
+        except Exception as e:
+            log_internal(logger, "SAML authentication response could not be parsed: '{}'".format(str(e)), None)
+            raise ServiceErrorException(str(e))
 
-        # logger.info("parsed OK")'
         return (_response.assertion.subject.name_id, _response.ava,
                 _response.assertion.authn_statement[0].authn_instant, _response.assertion.issuer.text)
 
@@ -165,24 +152,20 @@ class SamlSp(object):
 
     def disco_query(self, state):
         """
-        This service is expected to always use a discovery service. This is
-        where the response is handled
+        This service is expected to always use a discovery service.
 
-        :param state: State variable, a JWS
-        :return:
+        :param state: State variable
         """
 
-        _cli = self.sp
-
-        eid = _cli.config.entityid
+        eid = self.sp.config.entityid
         # returns list of 2-tuples
         dr = self.conf.getattr("endpoints", "sp")["discovery_response"]
         # The first value of the first tuple is the one I want
         ret = dr[0][0]
         # append it to the disco server URL
-        ret += "?state=%s" % state
-        loc = _cli.create_discovery_service_request(
+        loc = self.sp.create_discovery_service_request(
             self.disco_srv, eid, **{"return": ret})
+        ret += "&state={}".format(state)
 
         return loc
 
@@ -205,7 +188,7 @@ class SamlSp(object):
         if self.sign_func:
             msg_str = self.sign_func(request)
         else:
-            msg_str = "%s" % request
+            msg_str = str(request)
 
         ht_args = self.sp.apply_binding(binding, msg_str,
                                         request.destination,
