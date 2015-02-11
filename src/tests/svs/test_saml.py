@@ -2,6 +2,7 @@
 import json
 import os
 import unittest
+import urllib
 
 from saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST
 from saml2.config import SPConfig
@@ -30,8 +31,9 @@ class TestSamlSp(unittest.TestCase):
     BASE = "http://localhost"
     ISSUER = BASE
     SP_ENTITY_ID = "{base}_sp.xml".format(base=BASE)
-    ACS_URL = "{base}/acs/redirect".format(base=BASE)
-    DISCO_URL = "{base}/disco".format(base=BASE)
+    ACS_ENDPOINT = "{base}/acs/redirect".format(base=BASE)
+    DISCO_ENDPOINT = "{base}/disco".format(base=BASE)
+    DISCO_SRV_URL = "https://ds.example.com"
 
     @classmethod
     def setUpClass(cls):
@@ -45,10 +47,10 @@ class TestSamlSp(unittest.TestCase):
                     "required_attributes": ["edupersonaffiliation"],
                     "endpoints": {
                         "assertion_consumer_service": [
-                            (TestSamlSp.ACS_URL, BINDING_HTTP_REDIRECT),
+                            (TestSamlSp.ACS_ENDPOINT, BINDING_HTTP_REDIRECT),
                         ],
                         "discovery_response": [
-                            (TestSamlSp.DISCO_URL, BINDING_DISCO)
+                            (TestSamlSp.DISCO_ENDPOINT, BINDING_DISCO)
                         ]
                     },
                     "name_id_format": [NAMEID_FORMAT_PERSISTENT]
@@ -63,14 +65,14 @@ class TestSamlSp(unittest.TestCase):
 
     def setUp(self):
         self.SP = SamlSp(None, TestSamlSp.SP_CONF, MetadataMock(full_test_path("test_data/idps.md")),
-                         "https://ds.example.com", sign_func=None)
+                         TestSamlSp.DISCO_SRV_URL, sign_func=None)
 
     def test_authn_request(self):
         # Check the correct HTTP-POST binding is used
         idp_entity_id = "idp_post"
         request, binding = self.SP.construct_authn_request(idp_entity_id, self.SP.mds, TestSamlSp.ISSUER,
                                                            self.SP.nameid_policy,
-                                                           TestSamlSp.ACS_URL)
+                                                           TestSamlSp.ACS_ENDPOINT)
         assert request is not None
         assert binding == BINDING_HTTP_POST
 
@@ -78,7 +80,7 @@ class TestSamlSp(unittest.TestCase):
         idp_entity_id = "idp_redirect"
         request, binding = self.SP.construct_authn_request(idp_entity_id, self.SP.mds, TestSamlSp.ISSUER,
                                                            self.SP.nameid_policy,
-                                                           TestSamlSp.ACS_URL)
+                                                           TestSamlSp.ACS_ENDPOINT)
         assert request is not None
         assert binding == BINDING_HTTP_REDIRECT
 
@@ -86,7 +88,7 @@ class TestSamlSp(unittest.TestCase):
         idp_entity_id = "idp_post_redirect"
         request, binding = self.SP.construct_authn_request(idp_entity_id, self.SP.mds, TestSamlSp.ISSUER,
                                                            self.SP.nameid_policy,
-                                                           TestSamlSp.ACS_URL)
+                                                           TestSamlSp.ACS_ENDPOINT)
         assert request is not None
         assert binding == BINDING_HTTP_POST
 
@@ -105,5 +107,8 @@ class TestSamlSp(unittest.TestCase):
     def test_disco_query(self):
         state = "test_state"
         redirect_url = self.SP.disco_query(state)
-        assert redirect_url != "{disco_url}?entityID={entity_id}&return={disco_url}&state={state}".format(
-            disco_url=TestSamlSp.DISCO_URL, entity_id=TestSamlSp.SP_ENTITY_ID, state=state)
+
+        expected_return_url = "{}?state={}".format(TestSamlSp.DISCO_ENDPOINT, state)
+        assert redirect_url == "{disco_url}?entityID={entity_id}&return={return_url}".format(
+            disco_url=TestSamlSp.DISCO_SRV_URL, entity_id=urllib.quote(TestSamlSp.SP_ENTITY_ID, safe=''),
+            return_url=urllib.quote(expected_return_url, safe=''))

@@ -1,4 +1,5 @@
 import logging
+import urllib
 
 from oic.utils.http_util import SeeOther
 from oic.utils.http_util import Response
@@ -162,10 +163,10 @@ class SamlSp(object):
         dr = self.conf.getattr("endpoints", "sp")["discovery_response"]
         # The first value of the first tuple is the one I want
         ret = dr[0][0]
+        ret += "?state={}".format(state)
         # append it to the disco server URL
         loc = self.sp.create_discovery_service_request(
             self.disco_srv, eid, **{"return": ret})
-        ret += "&state={}".format(state)
 
         return loc
 
