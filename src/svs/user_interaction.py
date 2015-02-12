@@ -39,3 +39,26 @@ class EndUserErrorResponse(cherrypy.HTTPError):
 
     def get_error_page(self, *args, **kwargs):
         return self.error_page
+
+
+class ConsentPage(object):
+    """
+    Render the consent page.
+    """
+
+    TEMPLATE = "consent.mako"
+
+    @classmethod
+    def render(cls, base_url, rp_display_name, idp_entity_id, released_attributes, relay_state):
+        question = _("consent_question").format(rp_display_name=rp_display_name)
+
+        state = {
+            "idp_entity_id": idp_entity_id,
+            "state": relay_state,
+        }
+
+        return LOOKUP.get_template(cls.TEMPLATE).render(consent_question=question,
+                                                        released_attributes=released_attributes,
+                                                        state=state,
+                                                        form_action="{}consent".format(base_url),
+                                                        language=cherrypy.response.i18n.locale.language)

@@ -36,6 +36,7 @@ def log_transaction_fail(logger, environ, transaction_id, client_id, message, ti
     msg = "transaction_failed t={} uid={} {}".format(timestamp, uid, message)
     _log_transaction(logger, environ, transaction_id, client_id, msg)
 
+
 def log_internal(logger, message, environ, transaction_id="-", client_id="-"):
     if environ is not None:
         prefix = _get_clf_prefix_string(environ)
@@ -45,16 +46,18 @@ def log_internal(logger, message, environ, transaction_id="-", client_id="-"):
     msg = "{} {} {} {}".format(prefix, client_id, message, transaction_id)
     logger.debug(msg)
 
+
 def _log_transaction(logger, environ, transaction_id, client_id, message):
     msg = "{} {} {} {}".format(_get_clf_prefix_string(environ), client_id, message, transaction_id)
     logger.info(msg)
 
 
 def _get_clf_prefix_string(environ, timestamp=None):
-    """
-    Returns the prefix (containing IP address, identity, user id and timestamp) of the (Apache) Common Log Format.
-    :param environ:
-    :return:
+    """Return the log message prefix (containing IP address, identity, user id and timestamp) of the (Apache) Common
+    Log Format.
+
+    :param environ: cherrypy.request instance
+    :return: the message prefix
     """
     tmpl = '%(h)s %(l)s %(u)s %(t)s'
     msg = tmpl % {

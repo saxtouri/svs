@@ -1,5 +1,3 @@
-from saml2.saml import NAMEID_FORMAT_PERSISTENT, NAMEID_FORMAT_TRANSIENT
-
 __author__ = 'regu0004'
 
 # SAML attribute to verify affiliation with
@@ -13,8 +11,7 @@ COUNTRY = 'country'
 
 
 def get_affiliation_function(scope):
-    """
-    Returns the comparison function for the affiliation specified in the requested scope.
+    """Returns the comparison function for the affiliation specified in the requested scope.
 
     :param scope: requested scope from the RP
     :return: function to verify the users affiliation
@@ -22,34 +19,6 @@ def get_affiliation_function(scope):
     for affiliation in AFFILIATIONS:
         if affiliation in scope:
             return AFFILIATIONS[affiliation]
-
-
-def get_name_id(name_id_from_idp, identity, scope):
-    """
-    Generate the name id.
-
-    If the RP requested a persistent name id, try the following SAML attributes in order:
-        1. Persistent name id
-        2. eduPersonTargetedId (EPTID)
-        3. eduPersonPrincipalName (EPPN)
-    :param name_id_from_idp: name id as given by the SAML Auth Response
-    :param identity: SAML assertions
-    :param scope: requested scope from the RP
-    :return: the name id from the IdP or None if an incorrect or no name id at all was returned from the IdP.
-    """
-    if PERSISTENT_NAMEID in scope:
-        # Use one of NameID (if persistent) or EPTID or EPPN in that order
-        if name_id_from_idp.format == NAMEID_FORMAT_PERSISTENT:
-            return name_id_from_idp.text
-        else:
-            for key in ['eduPersonTargetedID', 'eduPersonPrincipalName']:
-                if key in identity:
-                    return identity[key][0]
-    else:
-        if name_id_from_idp.format == NAMEID_FORMAT_TRANSIENT:
-            return name_id_from_idp.text
-
-    return None
 
 
 def _is_student(identity):
