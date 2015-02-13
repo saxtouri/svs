@@ -160,8 +160,8 @@ def main():
         "/": {
             "request.dispatch": PathDispatcher({
                 "/": inacademia.consent_index,
-                "/ok": inacademia.consent_ok,
-                "/fail": inacademia.consent_ok
+                "/allow": inacademia.consent_allow,
+                "/deny": inacademia.consent_deny
             })
         }
     })
@@ -262,7 +262,7 @@ class InAcademiaMediator(object):
 
         return response_to_cherrypy(self.op.OP.providerinfo_endpoint())
 
-    def consent_ok(self, state=None, released_attributes=None):
+    def consent_allow(self, state=None, released_attributes=None):
         """Where the approved consent arrives.
 
         This function is mapped explicitly using PathDiscpatcher.
@@ -275,7 +275,7 @@ class InAcademiaMediator(object):
         decoded_state = self._decode_state(state["state"])
         return self.op.id_token(released_attributes, state["idp_entity_id"], state["state"], decoded_state)
 
-    def consent_fail(self, state=None):
+    def consent_deny(self, state=None):
         """Where the denied consent arrives.
 
         This function is mapped explicitly using PathDiscpatcher.

@@ -57,13 +57,13 @@
         <hr>
 
 
-        <form name="give_consent" action="${form_action}/ok" method="GET" style="float: left">
-            <input type="submit" value="${_('Ok, accept')}">
+        <form name="allow_consent" action="${form_action}/allow" method="GET" style="float: left">
+            <input id="submit_ok" type="submit" value="${_('Ok, accept')}">
             <input type="hidden" name="state" value="${to_json(state) | u}">
             <input type="hidden" name="released_attributes" value="${to_json(released_attributes) | u}">
         </form>
-        <form name="deny_consent" action="${form_action}/fail" method="GET" style="float: left; clear: right;">
-            <input type="submit" value="${_('No, cancel')}">
+        <form name="deny_consent" action="${form_action}/deny" method="GET" style="float: left; clear: right;">
+            <input id="submit_deny" type="submit" value="${_('No, cancel')}">
             <input type="hidden" name="state" value="${to_json(state) | u}">
         </form>
 
