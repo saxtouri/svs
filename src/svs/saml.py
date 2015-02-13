@@ -301,22 +301,22 @@ class InAcademiaSAMLBackend(object):
             log_internal(logger, "saml_response name_id={}".format(str(name_id).replace("\n", "")),
                          environ=cherrypy.request, transaction_id=encoded_state, client_id=decoded_state["client_id"])
         except AuthnFailure:
-            abort_with_client_error(encoded_state, decoded_state, logger, "User not authenticated at IdP.")
+            abort_with_client_error(encoded_state, decoded_state, cherrypy.request, logger,
+                                    "User not authenticated at IdP.")
         except Exception as e:
-            abort_with_client_error(encoded_state, decoded_state, logger,
+            abort_with_client_error(encoded_state, decoded_state, cherrypy.request, logger,
                                     "Incorrect SAML Response from IdP: '{}'".format(str(e)))
 
         has_correct_affiliation = get_affiliation_function(scope)
 
         if not has_correct_affiliation(identity):
-            negative_transaction_response(encoded_state,
-                                          decoded_state, "The user does not have the correct affiliation.",
+            negative_transaction_response(encoded_state, decoded_state,
+                                          cherrypy.request, "The user does not have the correct affiliation.",
                                           idp_entity_id)
 
         _user_id = self.get_name_id(name_id, identity, scope)
         if _user_id is None:
-            negative_transaction_response(encoded_state,
-                                          decoded_state,
+            negative_transaction_response(encoded_state, decoded_state, cherrypy.request,
                                           "The users identity could not be provided.",
                                           idp_entity_id)
 

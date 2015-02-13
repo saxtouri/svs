@@ -285,7 +285,7 @@ class InAcademiaMediator(object):
 
         state = json.loads(urllib.unquote_plus(state))
         decoded_state = self._decode_state(state["state"])
-        negative_transaction_response(state["state"], decoded_state, "User did not give consent.",
+        negative_transaction_response(state["state"], decoded_state, cherrypy.request, "User did not give consent.",
                                       state["idp_entity_id"])
 
     def consent_index(self, lang=None, state=None, released_attributes=None):

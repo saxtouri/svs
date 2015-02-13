@@ -46,10 +46,10 @@ def client_error_message(redirect_uri, error="access_denied", error_description=
     raise cherrypy.HTTPRedirect(location)
 
 
-def negative_transaction_response(transaction_id, session, logger, message, idp_entity_id):
+def negative_transaction_response(transaction_id, session, environ, logger, message, idp_entity_id):
     """Complete a transaction with a negative response (incorrect affiliation or no user consent).
     """
     _elapsed_transaction_time = get_timestamp() - session["start_time"]
-    log_negative_transaction_complete(logger, cherrypy.request, transaction_id, session["client_id"], idp_entity_id,
+    log_negative_transaction_complete(logger, environ, transaction_id, session["client_id"], idp_entity_id,
                                       now(), _elapsed_transaction_time, message)
     client_error_message(session["redirect_uri"], message)
