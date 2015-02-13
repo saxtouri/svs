@@ -1,0 +1,19 @@
+{
+  "client1": {
+    "redirect_uris": ["http://rp.example.com"],
+    "display_name": "Test RP Client1",
+    "allowed_scope_values": [
+      "student",
+      "persistent",
+      "domain"
+    ]
+  },
+  "client2": {
+    "redirect_uris": ["http://rp.example.com"],
+    "display_name": "Test RP Client2",
+    "allowed_scope_values": [
+      "affiliated",
+      "country"
+    ]
+  }
+}
