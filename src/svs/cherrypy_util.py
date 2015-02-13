@@ -33,17 +33,13 @@ class PathDispatcher(Dispatcher):
     """
 
     def __init__(self, apps):
-        """Copied from cherrypy.wsgiserver.wsgiserver2.WSGIPathInfoDispatcher.
+        """Inspired by cherrypy.wsgiserver.wsgiserver2.WSGIPathInfoDispatcher.
         """
 
         try:
             apps = list(apps.items())
         except AttributeError:
             pass
-
-        # Sort the apps by len(path), descending
-        apps.sort(cmp=lambda x, y: cmp(len(x[0]), len(y[0])))
-        apps.reverse()
 
         # The path_prefix strings must start, but not end, with a slash.
         # Use "" instead of "/".
