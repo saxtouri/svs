@@ -138,7 +138,7 @@ class SamlSp(object):
         try:
             _response = self.sp.parse_authn_request_response(SAMLResponse, binding)
         except Exception as e:
-            log_internal(logger, "SAML authentication response could not be parsed: '{}'".format(str(e)), None)
+            logger.exception("SAML authentication response could not be parsed.")
             raise ServiceErrorException(str(e))
 
         return (_response.assertion.subject.name_id, _response.ava,
