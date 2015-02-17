@@ -5,7 +5,8 @@ Filter implementation details
 Affiliation validation
 ======================
 
-The affiliation is validated using the SAML attribute ``eduPersonAffiliation``. In the following
+The affiliation is validated using the SAML attribute ``eduPersonAffiliation``. The following table shows the mapping
+between scopes requested by RP's in the authentication request and the values of ``eduPersonAffiliation``
 
 .. list-table:: Mapping between scope and accepted values for the affiliation attribute.
     :widths: 30 70
@@ -32,15 +33,19 @@ The affiliation is validated using the SAML attribute ``eduPersonAffiliation``. 
 Choose name id
 ==============
 
-If a transient user id is requested by the RP: the SAML nameID is used if it is transient.
+::
 
-If a persistent user id is requested by the RP: it is chosen in order from the following list
+    If a transient user id is requested by the RP:
+        Use the SAML nameID if it is transient.
 
-    #) Persistent SAML nameID
-    #) eduPersonTargetedId
-    #) eduPersonPrincipalName
+    If a persistent user id is requested by the RP:
+        Choose (in order) from the following list:
 
-If none of the above attributes can be used, the transaction will fail.
+        1. Persistent SAML nameID
+        2. eduPersonTargetedId
+        3. eduPersonPrincipalName
+
+    If none of the above attributes can be used, the transaction will fail.
 
 
 Additional claims
