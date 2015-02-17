@@ -4,8 +4,8 @@ Logging
 Currently four (4) different log files are generated from the InAcademia core:
 
 1. **svs_access.log**
-    All incoming requests to the SVS node, follow the `Combined Log Format <http://httpd.apache.org/docs/2.0/logs.html#combined>`_,
-    as written by CherryPy.
+    All incoming requests to the node, as written by CherryPy (formatted as
+    `Combined Log Format <http://httpd.apache.org/docs/2.0/logs.html#combined>`_).
 
 2. **svs_transactions.log**
     The entries in this log closely resembles the Common Log Format.
@@ -18,14 +18,11 @@ Currently four (4) different log files are generated from the InAcademia core:
 
         <client_ip> - - [<date>] <client_id> transaction_complete idp=<idp> auth_time=<auth_time> extra_claims=<extra_claims> id_token=<id_token> elapsed_transaction_time=<transaction_time> <transaction_id>
 
-3. **svs_transactions_error.log**
-    **TODO both format and what is logged**
-
 4. **svs_tech.log**
     All transaction log messages as described above with additional debug logging.
 
 
-The logging configuration can be found in ``data/logging_conf.json``.
+The logging configuration can be found in ``conf/logging_conf.json``.
 
 
 .. list-table:: Parameter substitution in log format
@@ -79,16 +76,15 @@ A successful transaction will generate three important log messages:
       - Key in logs
 
     * - Start of transaction (incoming authentication request)
-      - `transaction_start`
+      - ``transaction_start``
 
     * - End users choice of IdP at discovery server (response from discovery server)
-      - `idp_chosen`
+      - ``idp_chosen``
 
     * - Completed transaction
-      - `transaction_complete`
+      - ``transaction_complete`` (successful authentication response) or ``negative_transaction_complete``
+        (``access_denied`` error response)
 
-When a transaction is failed, the log message will have the key `transaction_failed` in the logs.
-If the incoming authentication request is invalid, the transaction is aborted (even though it has not technically
-started yet) and the log message will have the key
-`transaction_aborted`.
+When a transaction is failed, either due to an invalid authentication request (technically before any transaction has
+started) or because of some error, the log message will have the key ``transaction_failed`` in the logs.
 
