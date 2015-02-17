@@ -2,7 +2,7 @@ Usage
 #####
 
 The InAcademia service uses the `OpenID Connect standard`_ to provide validation of an end-users affiliation with an
-academic institution. In this protocol, the InAcademia service acts as an `OpenID Connect provider` (OP) and to validate
+academic institution. In this protocol the InAcademia service acts as an `OpenID Connect provider` (OP), and to validate
 an affiliation your service acts as a `Relying party` (RP).
 
 In :ref:`transaction_flow` the protocol flow and the messages exchanged in one transaction are described. All supported
@@ -48,8 +48,8 @@ Transaction: validate affiliation
 =================================
 
 To validate an end-users affiliation with an institution you must be registered with the InAcademia service and have a
-valid client id at the OP.
-**TODO: describe registration procedure**
+valid client id at the OP, see :ref:`client_registration`.
+
 
 Start of transaction: Authentication Request
 --------------------------------------------
@@ -77,6 +77,8 @@ browser at the redirect URI.
 Documentation of the response to a successful authentication can be found in the section
 `Successful authentication request`_.
 
+
+.. _client_registration:
 
 Registration with the InAcademia service
 ========================================
@@ -141,17 +143,14 @@ The following parameters are allowed in the authentication request:
       - URL to send response to, must be previously registered with the InAcademia service
       - Required
 
+    * - nonce
+      - opaque string to associate
+      - Required
+
     * - state
       - opaque string to maintain state between your RP and the InAcademia OP
       - Recommended
 
-    * - nonce
-      - opaque string to associate
-      - Recommended
-
-    * - max_age
-      - the accepted max age of the authentication
-      - Optional
 
 .. _requested_scope_rules:
 
@@ -293,9 +292,10 @@ The transaction will fail if:
        institution not part of `eduGAIN`
     #) the end-user was not authenticated at the selected institution
     #) the institution did not provide enough information to the InAcademia service to validate the affiliation
-    #) consent to release the necessary information was not given by the end-user
+    #) the end-user did not give consent to release the necessary information
 
-If the transaction fail an error code and error description will be returned in the fragment part of the redirect URI::
+If the transaction fail an error code and possible an error description will be returned in the fragment part of the
+redirect URI::
 
     <redirect_uri>#error=<error_code>&error_description=<error_description>
 
@@ -313,14 +313,8 @@ Possible errors
     * - ``access_denied``
       - end-user unauthorized, unknown or non-eduGAIN institution, the affiliation could not be validated
 
-    * - ``invalid_request``
-      - invalid redirect URI in the authentication request
-
     * - ``invalid_scope``
       - invalid scope specified in the authentication request (see :ref:`requested_scope_rules`)
-
-    * - ``unauthorized_client``
-      - not registered with the InAcademia service, invalid client id
 
     * - ``unsupported_response_type``
       - incorrect response type in the authentication request (must be ``id_token``)
