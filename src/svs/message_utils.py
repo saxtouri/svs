@@ -10,28 +10,29 @@ from svs.i18n_tool import ugettext as _
 __author__ = 'regu0004'
 
 
-def abort_with_enduser_error(transaction_id, client_id, environ, logger, log_msg):
+def abort_with_enduser_error(transaction_id, client_id, environ, logger, log_msg, **kwargs):
     """Construct and show error page for the user.
     """
-    t, uid = _log_fail(logger, log_msg, transaction_id, client_id, environ)
+    t, uid = _log_fail(logger, log_msg, transaction_id, client_id, environ, **kwargs)
     raise EndUserErrorResponse(t, uid, "error_general", _("error_general"))
 
 
-def abort_with_client_error(transaction_id, session, environ, logger, log_msg, error="access_denied", error_description=""):
+def abort_with_client_error(transaction_id, session, environ, logger, log_msg, error="access_denied",
+                            error_description="", **kwargs):
     """Log error and send error message.
 
     :param error: OpenID Connect error code
     :param error_description: error message string
     :return: raises cherrypy.HTTPRedirect to send the error to the RP.
     """
-    _log_fail(logger, log_msg, transaction_id, session["client_id"], environ)
+    _log_fail(logger, log_msg, transaction_id, session["client_id"], environ, **kwargs)
     client_error_message(session["redirect_uri"], error, error_description)
 
 
-def _log_fail(logger, log_msg, transaction_id, client_id, environ):
+def _log_fail(logger, log_msg, transaction_id, client_id, environ, **kwargs):
     t = now()
     uid = get_new_error_uid()
-    log_transaction_fail(logger, environ, transaction_id, client_id, log_msg, timestamp=t, uid=uid)
+    log_transaction_fail(logger, environ, transaction_id, client_id, log_msg, timestamp=t, uid=uid, **kwargs)
     return t, uid
 
 

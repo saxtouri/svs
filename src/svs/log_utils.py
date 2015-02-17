@@ -27,29 +27,29 @@ def log_transaction_idp(logger, environ, transaction_id, client_id, idp):
     _log_transaction(logger, environ, transaction_id, client_id, msg)
 
 
-def log_transaction_fail(logger, environ, transaction_id, client_id, message, timestamp=None, uid=None):
+def log_transaction_fail(logger, environ, transaction_id, client_id, message, timestamp=None, uid=None, **kwargs):
     if timestamp is None:
         timestamp = now()
     if uid is None:
         uid = get_new_error_uid()
 
     msg = "transaction_failed t={} uid={} {}".format(timestamp, uid, message)
-    _log_transaction(logger, environ, transaction_id, client_id, msg)
+    _log_transaction(logger, environ, transaction_id, client_id, msg, **kwargs)
 
 
-def log_internal(logger, message, environ, transaction_id="-", client_id="-"):
+def log_internal(logger, message, environ, transaction_id="-", client_id="-", **kwargs):
     if environ is not None:
         prefix = _get_clf_prefix_string(environ)
     else:
         prefix = "- - - {}".format(_clf_time())
 
     msg = "{} {} {} {}".format(prefix, client_id, message, transaction_id)
-    logger.debug(msg)
+    logger.debug(msg, **kwargs)
 
 
-def _log_transaction(logger, environ, transaction_id, client_id, message):
+def _log_transaction(logger, environ, transaction_id, client_id, message, **kwargs):
     msg = "{} {} {} {}".format(_get_clf_prefix_string(environ), client_id, message, transaction_id)
-    logger.info(msg)
+    logger.info(msg, **kwargs)
 
 
 def _get_clf_prefix_string(environ, timestamp=None):

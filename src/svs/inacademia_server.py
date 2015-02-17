@@ -19,7 +19,7 @@ from svs.user_interaction import ConsentPage, EndUserErrorResponse
 from svs.i18n_tool import ugettext as _
 from svs.filter import COUNTRY, \
     DOMAIN, AFFILIATION_ATTRIBUTE
-from svs.log_utils import log_transaction_start
+from svs.log_utils import log_transaction_start, log_internal
 from svs.utils import deconstruct_state, construct_state, N_
 
 
@@ -191,9 +191,11 @@ class InAcademiaMediator(object):
 
         session = self._decode_state(state)
         if "error" in kwargs:
-            abort_with_client_error(state, session, logger, "Discovery service error: '{}'.".format(kwargs["error"]))
+            abort_with_client_error(state, session, cherrypy.request, logger,
+                                    "Discovery service error: '{}'.".format(kwargs["error"]))
         elif entityID is None or entityID == "":
-            abort_with_client_error(state, session, logger, "No entity id returned from discovery server.")
+            abort_with_client_error(state, session, cherrypy.request, logger,
+                                    "No entity id returned from discovery server.")
 
         return self.sp.disco(entityID, state, session)
 
@@ -228,7 +230,7 @@ class InAcademiaMediator(object):
     def openid_configuration(self):
         """Where the OP configuration request arrives.
 
-        This function is mapped explicitly using PathDiscpatcher.
+        This function is mapped explicitly using PathDispatcher.
         """
 
         return response_to_cherrypy(self.op.OP.providerinfo_endpoint())
@@ -395,7 +397,8 @@ class InAcademiaMediator(object):
         try:
             return deconstruct_state(state, self.key_bundle.keys())
         except DecryptionFailed as e:
-            abort_with_enduser_error(state, "-", logger, "Transaction state missing or broken in incoming response.")
+            abort_with_enduser_error(state, "-", cherrypy.request, logger,
+                                     "Transaction state missing or broken in incoming response.")
 
     def _encode_state(self, payload):
         """Encode the transaction data.

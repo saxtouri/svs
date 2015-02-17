@@ -141,12 +141,7 @@ class SamlSp(object):
             log_internal(logger, "Auhtentication response from IdP is missing (maybe authn failure.", None)
             raise AuthnFailure("You are not authorized!")
 
-        try:
-            _response = self.sp.parse_authn_request_response(SAMLResponse, binding)
-        except Exception as e:
-            logger.exception("SAML authentication response could not be parsed.")
-            raise ServiceErrorException(str(e))
-
+        _response = self.sp.parse_authn_request_response(SAMLResponse, binding)
         return (_response.assertion.subject.name_id, _response.ava,
                 _response.assertion.authn_statement[0].authn_instant, _response.assertion.issuer.text)
 
@@ -285,7 +280,7 @@ class InAcademiaSAMLBackend(object):
 
         idp_entity_id = self._parse_idp_entity_id(entity_id)
         if not self._is_in_edugain(entity_id):
-            abort_with_client_error(encoded_state, decoded_state, logger,
+            abort_with_client_error(encoded_state, decoded_state, cherrypy.request, logger,
                                     "Non-edugain IdP '{}' returned from discovery server".format(idp_entity_id))
 
         log_transaction_idp(logger, cherrypy.request, encoded_state, decoded_state["client_id"], idp_entity_id)
@@ -294,13 +289,13 @@ class InAcademiaSAMLBackend(object):
         try:
             return response_to_cherrypy(sp.redirect_to_auth(self.metadata, idp_entity_id, encoded_state))
         except ServiceErrorException as e:
-            abort_with_client_error(encoded_state, decoded_state, logger,
-                                    "Could not create SAML authentication request: '{}'.".format(str(e)),
-                                    error_description="Validation could not be completed.")
+            abort_with_client_error(encoded_state, decoded_state, cherrypy.request, logger,
+                                    "Could not create SAML authentication request.",
+                                    error_description="Validation could not be completed.", exc_info=True)
         except ConnectionError as e:
-            abort_with_client_error(encoded_state, decoded_state, logger,
-                                    "Could not contact SAML MDQ: '{}'.".format(str(e)),
-                                    error_description="Validation could not be completed.")
+            abort_with_client_error(encoded_state, decoded_state, cherrypy.request, logger,
+                                    "Could not contact SAML MDQ.",
+                                    error_description="Validation could not be completed.", exc_info=True)
 
     def _is_in_edugain(self, entity_id):
         parsed = urlparse.urlparse(entity_id)
@@ -331,7 +326,7 @@ class InAcademiaSAMLBackend(object):
                                     "User not authenticated at IdP.")
         except Exception as e:
             abort_with_client_error(encoded_state, decoded_state, cherrypy.request, logger,
-                                    "Incorrect SAML Response from IdP: '{}'".format(str(e)))
+                                    "Could not parse Authentication Response from IdP.", exc_info=True)
 
         has_correct_affiliation = get_affiliation_function(scope)
 

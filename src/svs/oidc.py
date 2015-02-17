@@ -8,6 +8,7 @@ from oic.oic.provider import Provider
 from oic.utils.clientdb import NoClientInfoReceivedError
 from oic.utils.keyio import KeyJar, keybundle_from_local_file, dump_jwks
 from oic.utils.time_util import str_to_time
+import requests
 
 from svs.filter import AFFILIATIONS, PERSISTENT_NAMEID, TRANSIENT_NAMEID
 from svs.utils import get_timestamp
@@ -43,7 +44,8 @@ class InAcademiaOpenIDConnectFrontend(object):
             dump_jwks([kb], file_name)
             self.OP.jwks_uri.append("%s%s" % (base_url, file_name))
         except Exception as e:
-            logger.error("Signing and encryption keys could not be written to jwks.json: '{}'".format(e))
+            logger.exception("Signing and encryption keys could not be written to jwks.json.")
+            raise
 
     def id_token(self, released_attributes, idp_entity_id, encoded_state, decoded_state):
         """Make a JWT encoded id token and pass it to the redirect URI.
@@ -90,7 +92,7 @@ class InAcademiaOpenIDConnectFrontend(object):
                 cinfo = self.OP.cdb[session["client_id"]]
                 _ruri = cinfo["redirect_uris"][0]
             except NoClientInfoReceivedError as e:
-                abort_with_enduser_error(encoded_state, decoded_state["client_id"], logger,
+                abort_with_enduser_error(encoded_state, decoded_state["client_id"], cherrypy.request, logger,
                                          "Unknown RP client id '{}': '{}'.".format(session["client_id"], str(e)))
 
         location = authzresp.request(_ruri, True)
@@ -139,7 +141,8 @@ class InAcademiaOpenIDConnectFrontend(object):
             areq = self.OP.server.parse_authorization_request(query=query_string)
         except Exception as e:
             abort_with_enduser_error("-", "-", cherrypy.request, logger,
-                                     "The authentication request could not be processed: {}".format(str(e)))
+                                     "The authentication request '{}' could not be processed.".format(query_string),
+                                     exc_info=True)
 
         # Verify it's a client_id I recognize
         try:
@@ -147,6 +150,9 @@ class InAcademiaOpenIDConnectFrontend(object):
         except NoClientInfoReceivedError as e:
             abort_with_enduser_error("-", "-", cherrypy.request, logger,
                                      "Unknown RP client id '{}': '{}'.".format(areq["client_id"], str(e)))
+        except requests.exceptions.RequestException as e:
+            abort_with_enduser_error("-", "-", cherrypy.request, logger,
+                                     "Failed to get client metadata from MDQ server.", exc_info=True)
 
         # verify that the redirect_uri is sound
         if "redirect_uri" not in areq:
