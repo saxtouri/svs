@@ -8,16 +8,8 @@ import cherrypy
 from oic.utils.clientdb import MDQClient
 from oic.utils.keyio import KeyBundle
 from oic.utils.webfinger import WebFinger, OIC_ISSUER
-from saml2.httpbase import HTTPBase
-from saml2.mdstore import MetaDataMDX
 from saml2.response import DecryptionFailed
-from saml2 import BINDING_HTTP_POST, BINDING_HTTP_REDIRECT, saml
-from saml2 import sigver, md, config
-from saml2.attribute_converter import ac_factory
-from saml2.extension import mdui, dri, mdattr, ui, idpdisc
-from saml2.sigver import security_context
-import xmldsig
-import xmlenc
+from saml2 import BINDING_HTTP_POST, BINDING_HTTP_REDIRECT
 
 from svs.cherrypy_util import PathDispatcher, response_to_cherrypy
 from svs.message_utils import abort_with_client_error, abort_with_enduser_error, negative_transaction_response
@@ -28,7 +20,7 @@ from svs.i18n_tool import ugettext as _
 from svs.filter import COUNTRY, \
     DOMAIN, AFFILIATION_ATTRIBUTE
 from svs.log_utils import log_transaction_start
-from svs.utils import sha1_entity_transform, deconstruct_state, construct_state, N_
+from svs.utils import deconstruct_state, construct_state, N_
 
 
 logger = logging.getLogger(__name__)
@@ -79,28 +71,7 @@ def main():
     os.environ["PATH"] += os.pathsep + '/usr/local/bin'
 
     # ============== SAML ===============
-    ONTS = {
-        saml.NAMESPACE: saml,
-        mdui.NAMESPACE: mdui,
-        mdattr.NAMESPACE: mdattr,
-        dri.NAMESPACE: dri,
-        ui.NAMESPACE: ui,
-        idpdisc.NAMESPACE: idpdisc,
-        md.NAMESPACE: md,
-        xmldsig.NAMESPACE: xmldsig,
-        xmlenc.NAMESPACE: xmlenc
-    }
-    ATTRCONV = ac_factory("")
-    sec_config = config.Config()
-    sec_config.xmlsec_binary = sigver.get_xmlsec_binary()
-    logger.debug("xmlsec binary: {}".format(sec_config.xmlsec_binary))
-
-    http = HTTPBase(verify=False, ca_bundle=None)
-    security = security_context(sec_config)
-    MetadataFunc = MetaDataMDX(sha1_entity_transform, ONTS.values(), ATTRCONV, args.mdx,
-                               security, None, http, node_name="{}:{}".format(md.EntityDescriptor.c_namespace,
-                                                                              md.EntitiesDescriptor.c_tag))
-    SP = InAcademiaSAMLBackend(base_url, MetadataFunc, args.disco_url)
+    SP = InAcademiaSAMLBackend(base_url, args.mdx, args.disco_url)
 
     # ============== OIDC ===============
     ClientDB = MDQClient(args.cdb)

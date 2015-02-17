@@ -5,14 +5,19 @@ import cherrypy
 from oic.utils.http_util import SeeOther
 from oic.utils.http_util import Response
 from saml2.client_base import Base
-from saml2.config import SPConfig
-from saml2.httpbase import ConnectionError
+from saml2.httpbase import ConnectionError, HTTPBase
+from saml2.mdstore import MetaDataMDX
 from saml2.saml import Issuer, NAMEID_FORMAT_ENTITY, NAMEID_FORMAT_PERSISTENT, NAMEID_FORMAT_TRANSIENT
 from saml2.samlp import AuthnRequest
 from saml2.samlp import NameIDPolicy
 from saml2.time_util import instant
-from saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST
+from saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST, saml
 from saml2.s_utils import sid
+from saml2 import sigver, md, config
+from saml2.attribute_converter import ac_factory
+from saml2.extension import mdui, dri, mdattr, ui, idpdisc
+import xmldsig
+import xmlenc
 
 from log_utils import log_internal
 from svs.cherrypy_util import response_to_cherrypy
@@ -20,6 +25,7 @@ from svs.message_utils import abort_with_client_error, negative_transaction_resp
 from svs.filter import get_affiliation_function, PERSISTENT_NAMEID
 from svs.log_utils import log_transaction_idp
 from svs.sp_metadata import TRANSIENT_SP_KEY, PERSISTENT_SP_KEY, make_metadata
+from svs.utils import sha1_entity_transform
 
 
 logger = logging.getLogger(__name__)
@@ -215,7 +221,7 @@ class InAcademiaSAMLBackend(object):
     for the SAML metadata NameID attribute.
     """
 
-    def __init__(self, base_url, metadata, disco_url):
+    def __init__(self, base_url, mdx_url, disco_url):
         """Constructor.
 
         :param base_url: base url of the entire service
@@ -223,12 +229,32 @@ class InAcademiaSAMLBackend(object):
         :param disco_url: URL to the discovery service
         :return:
         """
-        self.metadata = metadata
+        ONTS = {
+            saml.NAMESPACE: saml,
+            mdui.NAMESPACE: mdui,
+            mdattr.NAMESPACE: mdattr,
+            dri.NAMESPACE: dri,
+            ui.NAMESPACE: ui,
+            idpdisc.NAMESPACE: idpdisc,
+            md.NAMESPACE: md,
+            xmldsig.NAMESPACE: xmldsig,
+            xmlenc.NAMESPACE: xmlenc
+        }
+        ATTRCONV = ac_factory("")
+        sp_config = config.SPConfig()
+        sp_config.xmlsec_binary = sigver.get_xmlsec_binary()
+        logger.debug("xmlsec binary: {}".format(sp_config.xmlsec_binary))
+
+        http = HTTPBase(verify=False, ca_bundle=None)
+        self.metadata = MetaDataMDX(sha1_entity_transform, ONTS.values(), ATTRCONV, mdx_url,
+                                    None, None, http, node_name="{}:{}".format(md.EntityDescriptor.c_namespace,
+                                                                               md.EntitiesDescriptor.c_tag))
+        sp_config.metadata = self.metadata
 
         self.SP = {}
         sp_configs = make_metadata(base_url)
         for sp_key in [TRANSIENT_SP_KEY, PERSISTENT_SP_KEY]:
-            cnf = SPConfig().load(sp_configs[sp_key])
+            cnf = sp_config.load(sp_configs[sp_key])
             self.SP[sp_key] = SamlSp(None, cnf, disco_url)
 
     def redirect_to_auth(self, state, scope):
