@@ -1,15 +1,3 @@
-Make Docker image
-#################
-
-Execute the following commands::
-
-    # Copy the files from the inacademia repository, following the symlinks
-    cp -L --remove-destination <inacademia repo path>/docker/* <dest_dir>
-
-    cd <dest_dir>
-    docker build -t svs .
-
-
 Run Docker container from image
 ###############################
 
@@ -23,3 +11,26 @@ self-signed certificate::
 
 The file `ca-bundle.crt` must be accessible inside the Docker container. This is easiest achieved by placing it in the
 directory on the host which is mounted as a volume inside the Docker container (see :ref:`docker_image`).
+
+
+Internationalization
+####################
+
+InAcademia uses the ``Babel`` package for internationalization (i18n).
+
+
+When adding any new strings to the code wrap the message key with "gettext", e.g.::
+
+    print gettext("error_general")
+
+The initial messages was extracted using::
+
+    python setup.py extract_messages --input-dirs src/svs --output-file src/svs/data/i18n/messages.pot
+
+Updated .po file with new keys which has been added to the po template file::
+
+    python setup.py update_catalog -l en -i src/svs/data/i18n/messages.pot -o src/svs/data/i18n/locales/en/LC_MESSAGES/messages.po
+
+Generate .mo file::
+
+    python setup.py compile_catalog --directory src/svs/data/i18n/locales/ --locale en
