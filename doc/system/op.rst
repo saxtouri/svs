@@ -35,6 +35,8 @@ The global CherryPy configuration is updated to contain a special error handler 
 `request.error_response`), which will set the response status to 418 (I'm a teapot) for the automatic error response
 sent by CherryPy for any uncatched application exception.
 
+A unique id is generated whenever an error message is displayed to the end user to correlate the end user message and
+log entry. These id's are Version 1 UUID's (as produced by Python's ``str(uuid.uuid1().int``).
 
 Error codes
 ===========
@@ -56,10 +58,10 @@ Error codes
 
     * - \(2\) RP makes authentication request
       - RP is not registered at InAcademia
-      - ``unauthorized_client``
+      - *RP is unknown, notify end-user and log it (we can't trust the redirect URI)*
 
     * -
-      - RP registered, but invalid client id
+      - RP registered, but invalid client credentials (HTTP Basic auth)
       - ``unauthorized_client``
 
     * -
