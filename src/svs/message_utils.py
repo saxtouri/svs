@@ -17,7 +17,7 @@ def abort_with_enduser_error(transaction_id, client_id, environ, logger, log_msg
     raise EndUserErrorResponse(t, uid, "error_general", _("error_general"))
 
 
-def abort_with_client_error(transaction_id, session, environ, logger, log_msg, error="access_denied",
+def abort_with_client_error(transaction_id, transaction_session, environ, logger, log_msg, error="access_denied",
                             error_description="", **kwargs):
     """Log error and send error message.
 
@@ -25,8 +25,8 @@ def abort_with_client_error(transaction_id, session, environ, logger, log_msg, e
     :param error_description: error message string
     :return: raises cherrypy.HTTPRedirect to send the error to the RP.
     """
-    _log_fail(logger, log_msg, transaction_id, session["client_id"], environ, **kwargs)
-    client_error_message(session["redirect_uri"], error, error_description)
+    _log_fail(logger, log_msg, transaction_id, transaction_session["client_id"], environ, **kwargs)
+    client_error_message(transaction_session["redirect_uri"], error, error_description)
 
 
 def _log_fail(logger, log_msg, transaction_id, client_id, environ, **kwargs):
@@ -47,10 +47,10 @@ def client_error_message(redirect_uri, error="access_denied", error_description=
     raise cherrypy.HTTPRedirect(location)
 
 
-def negative_transaction_response(transaction_id, session, environ, logger, message, idp_entity_id):
+def negative_transaction_response(transaction_id, transaction_session, environ, logger, message, idp_entity_id):
     """Complete a transaction with a negative response (incorrect affiliation or no user consent).
     """
-    _elapsed_transaction_time = get_timestamp() - session["start_time"]
-    log_negative_transaction_complete(logger, environ, transaction_id, session["client_id"], idp_entity_id,
+    _elapsed_transaction_time = get_timestamp() - transaction_session["start_time"]
+    log_negative_transaction_complete(logger, environ, transaction_id, transaction_session["client_id"], idp_entity_id,
                                       now(), _elapsed_transaction_time, message)
-    client_error_message(session["redirect_uri"], message)
+    client_error_message(transaction_session["redirect_uri"], message)

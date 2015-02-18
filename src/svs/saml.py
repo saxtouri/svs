@@ -275,25 +275,25 @@ class InAcademiaSAMLBackend(object):
 
         return self.SP[sp_key]
 
-    def disco(self, entity_id, encoded_state, decoded_state):
-        sp = self._choose_service_provider(decoded_state["scope"])
+    def disco(self, entity_id, transaction_id, transaction_session):
+        sp = self._choose_service_provider(transaction_session["scope"])
 
         idp_entity_id = self._parse_idp_entity_id(entity_id)
         if not self._is_in_edugain(entity_id):
-            abort_with_client_error(encoded_state, decoded_state, cherrypy.request, logger,
+            abort_with_client_error(transaction_id, transaction_session, cherrypy.request, logger,
                                     "Non-edugain IdP '{}' returned from discovery server".format(idp_entity_id))
 
-        log_transaction_idp(logger, cherrypy.request, encoded_state, decoded_state["client_id"], idp_entity_id)
+        log_transaction_idp(logger, cherrypy.request, transaction_id, transaction_session["client_id"], idp_entity_id)
 
         # Construct the SAML2 AuthenticationRequest and send it
         try:
-            return response_to_cherrypy(sp.redirect_to_auth(self.metadata, idp_entity_id, encoded_state))
+            return response_to_cherrypy(sp.redirect_to_auth(self.metadata, idp_entity_id, transaction_id))
         except ServiceErrorException as e:
-            abort_with_client_error(encoded_state, decoded_state, cherrypy.request, logger,
+            abort_with_client_error(transaction_id, transaction_session, cherrypy.request, logger,
                                     "Could not create SAML authentication request.",
                                     error_description="Validation could not be completed.", exc_info=True)
         except ConnectionError as e:
-            abort_with_client_error(encoded_state, decoded_state, cherrypy.request, logger,
+            abort_with_client_error(transaction_id, transaction_session, cherrypy.request, logger,
                                     "Could not contact SAML MDQ.",
                                     error_description="Validation could not be completed.", exc_info=True)
 
@@ -310,34 +310,34 @@ class InAcademiaSAMLBackend(object):
 
         return idp_entity_id
 
-    def acs(self, SAMLResponse, binding, encoded_state, decoded_state):
+    def acs(self, SAMLResponse, binding, transaction_id, transaction_session):
         """
         Handle the SAML Authentication Request (received at the SP's assertion consumer URL).
         :return:
         """
-        scope = decoded_state["scope"]
+        scope = transaction_session["scope"]
         sp = self._choose_service_provider(scope)
         try:
             name_id, identity, auth_time, idp_entity_id = sp.parse_auth_response(SAMLResponse, binding)
             log_internal(logger, "saml_response name_id={}".format(str(name_id).replace("\n", "")),
-                         environ=cherrypy.request, transaction_id=encoded_state, client_id=decoded_state["client_id"])
+                         environ=cherrypy.request, transaction_id=transaction_id, client_id=transaction_session["client_id"])
         except AuthnFailure:
-            abort_with_client_error(encoded_state, decoded_state, cherrypy.request, logger,
+            abort_with_client_error(transaction_id, transaction_session, cherrypy.request, logger,
                                     "User not authenticated at IdP.")
         except Exception as e:
-            abort_with_client_error(encoded_state, decoded_state, cherrypy.request, logger,
+            abort_with_client_error(transaction_id, transaction_session, cherrypy.request, logger,
                                     "Could not parse Authentication Response from IdP.", exc_info=True)
 
         has_correct_affiliation = get_affiliation_function(scope)
 
         if not has_correct_affiliation(identity):
-            negative_transaction_response(encoded_state, decoded_state,
+            negative_transaction_response(transaction_id, transaction_session,
                                           cherrypy.request, "The user does not have the correct affiliation.",
                                           idp_entity_id)
 
         _user_id = self.get_name_id(name_id, identity, scope)
         if _user_id is None:
-            negative_transaction_response(encoded_state, decoded_state, cherrypy.request,
+            negative_transaction_response(transaction_id, transaction_session, cherrypy.request,
                                           "The users identity could not be provided.",
                                           idp_entity_id)
 

@@ -42,12 +42,12 @@ class InAcademiaOpenIDConnectFrontend(object):
         try:
             file_name = "static/jwks.json"
             dump_jwks([kb], file_name)
-            self.OP.jwks_uri.append("%s%s" % (base_url, file_name))
+            self.OP.jwks_uri.append("{}{}".format(base_url, file_name))
         except Exception as e:
             logger.exception("Signing and encryption keys could not be written to jwks.json.")
             raise
 
-    def id_token(self, released_attributes, idp_entity_id, encoded_state, decoded_state):
+    def id_token(self, released_attributes, idp_entity_id, transaction_id, transaction_session):
         """Make a JWT encoded id token and pass it to the redirect URI.
 
         :param released_attributes: dictionary containing the following
@@ -55,7 +55,7 @@ class InAcademiaOpenIDConnectFrontend(object):
                         id was requested)
             auth_time: time of the authentication reported from the IdP
             idp_entity_id: entity id of the selected IdP
-        :param encoded_state:
+        :param transaction_id:
         :return: raises cherrypy.HTTPRedirect.
         """
 
@@ -66,37 +66,38 @@ class InAcademiaOpenIDConnectFrontend(object):
         _time = time.mktime(str_to_time(auth_time))
 
         # construct the OIDC response
-        session = decoded_state
-        session["sub"] = identifier
+        transaction_session["sub"] = identifier
 
         extra_claims = {k: released_attributes[k] for k in ["country", "domain"] if k in released_attributes}
-        _jwt = self.OP.id_token_as_signed_jwt(session, loa="", auth_time=_time, exp={"minutes": 30},
+        _jwt = self.OP.id_token_as_signed_jwt(transaction_session, loa="", auth_time=_time, exp={"minutes": 30},
                                               extra_claims=extra_claims)
 
-        _elapsed_transaction_time = get_timestamp() - session["start_time"]
-        log_transaction_complete(logger, cherrypy.request, encoded_state, session["client_id"], idp_entity_id,
+        _elapsed_transaction_time = get_timestamp() - transaction_session["start_time"]
+        log_transaction_complete(logger, cherrypy.request, transaction_id, transaction_session["client_id"],
+                                 idp_entity_id,
                                  _time, extra_claims, _jwt, _elapsed_transaction_time)
 
         try:
-            _state = session["state"]
+            _state = transaction_session["state"]
         except KeyError:
             _state = None
         authzresp = AuthorizationResponse(state=_state,
-                                          scope=session["scope"],
+                                          scope=transaction_session["scope"],
                                           id_token=_jwt)
 
-        if "redirect_uri" in session:
-            _ruri = session["redirect_uri"]
+        if "redirect_uri" in transaction_session:
+            _ruri = transaction_session["redirect_uri"]
         else:
             try:
-                cinfo = self.OP.cdb[session["client_id"]]
+                cinfo = self.OP.cdb[transaction_session["client_id"]]
                 _ruri = cinfo["redirect_uris"][0]
             except NoClientInfoReceivedError as e:
-                abort_with_enduser_error(encoded_state, decoded_state["client_id"], cherrypy.request, logger,
-                                         "Unknown RP client id '{}': '{}'.".format(session["client_id"], str(e)))
+                abort_with_enduser_error(transaction_id, transaction_session["client_id"], cherrypy.request, logger,
+                                         "Unknown RP client id '{}': '{}'.".format(transaction_session["client_id"],
+                                                                                   str(e)))
 
         location = authzresp.request(_ruri, True)
-        logger.debug("Redirected to: '%s' (%s)" % (location, type(location)))
+        logger.debug("Redirected to: '{}' ({})".format(location, type(location)))
         raise cherrypy.HTTPRedirect(location)
 
     def _verify_scope(self, scope, client_id):
@@ -158,7 +159,6 @@ class InAcademiaOpenIDConnectFrontend(object):
         if "redirect_uri" not in areq:
             abort_with_enduser_error("-", "-", cherrypy.request, logger,
                                      "Missing redirect URI in authentication request.")
-            # _error("invalid_request", "Missing redirect URI")
         elif areq["redirect_uri"] not in cinfo["redirect_uris"]:
             abort_with_enduser_error("-", "-", cherrypy.request, logger,
                                      "Unknown redirect URI in authentication request: '{}' not in '{}'".format(
@@ -166,7 +166,7 @@ class InAcademiaOpenIDConnectFrontend(object):
                                          cinfo["redirect_uris"]))
 
         # Create the state variable
-        session = {
+        transaction_session = {
             "client_id": areq["client_id"],
             "nonce": areq["nonce"],
             "scope": areq["scope"],
@@ -175,20 +175,20 @@ class InAcademiaOpenIDConnectFrontend(object):
         }
 
         if "state" in areq:
-            session["state"] = areq["state"]
+            transaction_session["state"] = areq["state"]
 
         # Verify that the response_type if present is id_token
         try:
             assert areq["response_type"] == ["id_token"]
         except (KeyError, AssertionError) as err:  # has to be there and match
-            abort_with_client_error("-", session, cherrypy.request, logger,
+            abort_with_client_error("-", transaction_session, cherrypy.request, logger,
                                     "Unsupported response_type '{}'".format(areq["response_type"]),
                                     error="unsupported_response_type",
                                     error_description="Only response_type 'id_token' is supported.")
 
         if not self._verify_scope(areq["scope"], areq["client_id"]):
-            abort_with_client_error("-", session, cherrypy.request, logger, "Invalid scope '{}'".format(areq["scope"]),
+            abort_with_client_error("-", transaction_session, cherrypy.request, logger, "Invalid scope '{}'".format(areq["scope"]),
                                     error="invalid_scope",
                                     error_description="The specified scope '{}' is not valid.".format(areq["scope"]))
 
-        return session
+        return transaction_session

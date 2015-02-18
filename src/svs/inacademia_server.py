@@ -136,7 +136,7 @@ def main():
             })
         }
     })
-    print("SvS core listening on %s:%s" % (args.host, args.port))
+    print("SvS core listening on {}:{}".format(args.host, args.port))
 
     cherrypy.engine.signal_handler.subscribe()
     cherrypy.engine.start()
@@ -174,12 +174,13 @@ class InAcademiaMediator(object):
     def authorization(self, *args, **kwargs):
         """Where the OP Authentication Request arrives.
         """
-        session = self.op.verify_authn_request(cherrypy.request.query_string)
-        state = self._encode_state(session)
+        transaction_session = self.op.verify_authn_request(cherrypy.request.query_string)
+        state = self._encode_state(transaction_session)
 
-        log_transaction_start(logger, cherrypy.request, state, session["client_id"], session["scope"],
-                              session["redirect_uri"])
-        return self.sp.redirect_to_auth(state, session["scope"])
+        log_transaction_start(logger, cherrypy.request, state, transaction_session["client_id"],
+                              transaction_session["scope"],
+                              transaction_session["redirect_uri"])
+        return self.sp.redirect_to_auth(state, transaction_session["scope"])
 
 
     @cherrypy.expose
@@ -189,15 +190,15 @@ class InAcademiaMediator(object):
         if state is None:
             raise cherrypy.HTTPError(404, _('Page not found.'))
 
-        session = self._decode_state(state)
+        transaction_session = self._decode_state(state)
         if "error" in kwargs:
-            abort_with_client_error(state, session, cherrypy.request, logger,
+            abort_with_client_error(state, transaction_session, cherrypy.request, logger,
                                     "Discovery service error: '{}'.".format(kwargs["error"]))
         elif entityID is None or entityID == "":
-            abort_with_client_error(state, session, cherrypy.request, logger,
+            abort_with_client_error(state, transaction_session, cherrypy.request, logger,
                                     "No entity id returned from discovery server.")
 
-        return self.sp.disco(entityID, state, session)
+        return self.sp.disco(entityID, state, transaction_session)
 
     @cherrypy.expose
     def error(self, lang=None, error=None):
@@ -245,8 +246,8 @@ class InAcademiaMediator(object):
 
         state = json.loads(urllib.unquote_plus(state))
         released_attributes = json.loads(urllib.unquote_plus(released_attributes))
-        decoded_state = self._decode_state(state["state"])
-        return self.op.id_token(released_attributes, state["idp_entity_id"], state["state"], decoded_state)
+        transaction_session = self._decode_state(state["state"])
+        return self.op.id_token(released_attributes, state["idp_entity_id"], state["state"], transaction_session)
 
     def consent_deny(self, state=None):
         """Where the denied consent arrives.
@@ -257,8 +258,8 @@ class InAcademiaMediator(object):
             raise cherrypy.HTTPError(404, _("Page not found."))
 
         state = json.loads(urllib.unquote_plus(state))
-        decoded_state = self._decode_state(state["state"])
-        negative_transaction_response(state["state"], decoded_state, cherrypy.request, "User did not give consent.",
+        transaction_state = self._decode_state(state["state"])
+        negative_transaction_response(state["state"], transaction_state, cherrypy.request, "User did not give consent.",
                                       state["idp_entity_id"])
 
     def consent_index(self, lang=None, state=None, released_attributes=None):
@@ -297,15 +298,15 @@ class InAcademiaMediator(object):
 
         :return: HTML of the OP consent page.
         """
-        decoded_state = self._decode_state(RelayState)
+        transaction_session = self._decode_state(RelayState)
         user_id, identity, auth_time, idp_entity_id = self.sp.acs(SAMLResponse, binding, RelayState,
-                                                                  decoded_state)
+                                                                  transaction_session)
 
         # if we have passed all checks, ask the user for consent before finalizing
         released_attributes = self._get_attributes_to_release(user_id, identity, auth_time, idp_entity_id,
-                                                              decoded_state)
+                                                              transaction_session)
 
-        display_name = self._get_client_display_name(decoded_state["client_id"])
+        display_name = self._get_client_display_name(transaction_session["client_id"])
         return ConsentPage.render(self.op.OP.baseurl, display_name, idp_entity_id, released_attributes,
                                   RelayState)
 
@@ -351,7 +352,7 @@ class InAcademiaMediator(object):
         idp_info = metadata[entity_id]
         return idp_info.get("country", None)  # TODO add country information to SAML entity metadata
 
-    def _get_attributes_to_release(self, user_id, identity, auth_time, idp_entity_id, session):
+    def _get_attributes_to_release(self, user_id, identity, auth_time, idp_entity_id, transaction_session):
         """
         Compile a dictionary of a all attributes (claims) we will release to the client.
 
@@ -359,16 +360,17 @@ class InAcademiaMediator(object):
         :param identity: assertions about the user from the IdP
         :param auth_time: time of authentication reported from the IdP
         :param idp_entity_id: id of the IdP
-        :param session: transaction data
+        :param transaction_session: transaction data
         :return:
         """
         attributes = [N_("affiliation"), N_("identifier"), N_("authentication time")]
         values = [identity[AFFILIATION_ATTRIBUTE],
-                  self._generate_subject_id(session["client_id"], user_id, idp_entity_id),
+                  self._generate_subject_id(transaction_session["client_id"], user_id, idp_entity_id),
                   auth_time]
         l = zip(attributes, values)
 
-        extra_attributes = self._get_extra_attributes(identity, idp_entity_id, session["client_id"], session["scope"])
+        extra_attributes = self._get_extra_attributes(identity, idp_entity_id, transaction_session["client_id"],
+                                                      transaction_session["scope"])
         l.extend(extra_attributes)
 
         return dict(l)
