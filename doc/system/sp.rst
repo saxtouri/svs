@@ -71,3 +71,20 @@ MDX protocol
 ============
 
 When fetching IdP's SAML metadata from the MDX server, the IdP's entity id is hashed with sha1 to make it url safe.
+
+The MDX is also queried to decide whether the IdP selected by the user is part of eduGAIN. An IdP is deemed part of
+eduGAIN if the value of the attribute ``publisher`` is "http://mds.edugain.org" in the ``Publication`` element
+(see `SAML Metadata Extensions for RPI`_)::
+
+    <EntityDescriptor ...>
+        <Extensions>
+            <mdrpi:PublicationPath>
+                <mdrpi:Publication publisher="http://mds.edugain.org" />
+            </mdrpi:PublicationPath>
+        </Extensions>
+
+        <IDPSSODescriptor ...>
+        </IDPSSODescriptor>
+    </EntityDescriptor>
+
+.. _SAML Metadata Extensions for RPI: http://docs.oasis-open.org/security/saml/Post2.0/saml-metadata-rpi/v1.0/saml-metadata-rpi-v1.0.html
