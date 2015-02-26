@@ -177,6 +177,9 @@ class InAcademiaOpenIDConnectFrontend(object):
         if "state" in areq:
             transaction_session["state"] = areq["state"]
 
+        if "claims" in areq:
+            transaction_session["claims"] = areq["claims"]["id_token"].to_dict()
+
         # Verify that the response_type if present is id_token
         try:
             assert areq["response_type"] == ["id_token"]

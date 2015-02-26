@@ -6,6 +6,8 @@ AFFILIATION_ATTRIBUTE = 'eduPersonAffiliation'
 # Values the RP can request in OpenID Connect parameter 'scope' in the Auth req.
 PERSISTENT_NAMEID = 'persistent'
 TRANSIENT_NAMEID = 'transient'
+
+# Supported claims in the Auth req
 DOMAIN = 'domain'
 COUNTRY = 'country'
 

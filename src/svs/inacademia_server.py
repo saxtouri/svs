@@ -303,11 +303,11 @@ class InAcademiaMediator(object):
                                                                   transaction_session)
 
         # if we have passed all checks, ask the user for consent before finalizing
-        released_attributes = self._get_attributes_to_release(user_id, identity, auth_time, idp_entity_id,
-                                                              transaction_session)
+        released_claims = self._get_claims_to_release(user_id, identity, auth_time, idp_entity_id,
+                                                      transaction_session)
 
         display_name = self._get_client_display_name(transaction_session["client_id"])
-        return ConsentPage.render(self.op.OP.baseurl, display_name, idp_entity_id, released_attributes,
+        return ConsentPage.render(self.op.OP.baseurl, display_name, idp_entity_id, released_claims,
                                   RelayState)
 
     def _generate_subject_id(self, client_id, user_id, idp_entity_id):
@@ -319,24 +319,22 @@ class InAcademiaMediator(object):
         """
         return hashlib.sha512(client_id + user_id + idp_entity_id).hexdigest()
 
-    def _get_extra_attributes(self, identity, idp_entity_id, client_id, scope):
+    def _get_extra_claims(self, identity, idp_entity_id, requested_claims):
         """Create the extra attributes (claims) requested by the RP.
 
         Extra attributes will only be returned if the RP is allowed to request them and we got them from the IdP.
 
         :param identity: assertions from the IdP about the user
         :param idp_entity_id: entity id of the IdP
-        :param client_id: the RP's client id
         :param scope: requested scope from the RP
         :return: a list of tuples with any extra claims to return to the RP with the id token.
         """
-
         claims = []
-        if DOMAIN in scope:
+        if DOMAIN in requested_claims:
             if "schacHomeOrganization" in identity:
                 claims.append((N_("domain"), identity["schacHomeOrganization"][0]))
 
-        if COUNTRY in scope:
+        if COUNTRY in requested_claims:
             country = self._get_idp_country(self.sp.metadata, idp_entity_id)
             if country is not None:
                 claims.append((N_("country"), country))
@@ -352,7 +350,7 @@ class InAcademiaMediator(object):
         idp_info = metadata[entity_id]
         return idp_info.get("country", None)  # TODO add country information to SAML entity metadata
 
-    def _get_attributes_to_release(self, user_id, identity, auth_time, idp_entity_id, transaction_session):
+    def _get_claims_to_release(self, user_id, identity, auth_time, idp_entity_id, transaction_session):
         """
         Compile a dictionary of a all attributes (claims) we will release to the client.
 
@@ -369,9 +367,8 @@ class InAcademiaMediator(object):
                   auth_time]
         l = zip(attributes, values)
 
-        extra_attributes = self._get_extra_attributes(identity, idp_entity_id, transaction_session["client_id"],
-                                                      transaction_session["scope"])
-        l.extend(extra_attributes)
+        extra_claims = self._get_extra_claims(identity, idp_entity_id, transaction_session["claims"])
+        l.extend(extra_claims)
 
         return dict(l)
 
