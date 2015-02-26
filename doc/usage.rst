@@ -117,7 +117,7 @@ The authentication should be directed to::
 
     <inacademia_base>/authorization
 
-The following parameters are allowed in the authentication request:
+The following parameters are allowed in the authentication request (any others will just be ignored):
 
 .. list-table:: Authentication request parameters
     :widths: 10 80 10
@@ -151,6 +151,10 @@ The following parameters are allowed in the authentication request:
       - opaque string to maintain state between your RP and the InAcademia OP
       - Recommended
 
+    * - claims
+      - Any additional claims that should be returned in the id token.
+      - Optional
+
 
 .. _requested_scope_rules:
 
@@ -158,12 +162,11 @@ Type of affiliation
 ^^^^^^^^^^^^^^^^^^^
 
 The type of affiliation validation for the transaction is specified in the `scope` of the authentication request.
-There are three categories of scopes allowed:
+There are two categories of scopes allowed:
 
     #) **Affiliation:** what type of affiliation should be validated?
     #) **Identifier:** what type of identifier is requested (persistent, to be able to identify returning users, or
        transient, unique for each validation transaction)?
-    #) **Other:** what extra information about the user should be returned?
 
 A valid scope string must fulfill the following:
     #) Exactly one value from the affiliation category of scopes must be specified.
@@ -208,12 +211,28 @@ The table below contains all values, grouped by category, allowed in the scope s
       - transient
       - Transient identifier, which is unique for each transaction.
 
-    * - Other
-      - country
+.. _additional_claims:
+
+Additional claims
+^^^^^^^^^^^^^^^^^
+
+To request additional claims about the end user, the ``claims`` parameter can be specified in the authentication
+request, see `Claims Parameter in Authentication request`_. Only "``id_token``" is supported as a top-level member and
+requests for a claim with a particular value are not supported.
+
+The additional claims that can be requested can be seen in the following table:
+
+.. list-table:: Allowed claims values
+    :header-rows: 1
+    :stub-columns: 1
+
+    * - Claim
+      - Description
+
+    * - country
       - The country of the users home institution.
 
-    * -
-      - domain
+    * - domain
       - The domain name of the users home institution.
 
 
@@ -255,16 +274,15 @@ validated, see `ID Token Validation`_.
         transaction. If a persistent identifier was requested this value will be unique per end-user.
 
 
-.. _additional_claims:
-
-The id may also contain additional claims. The claims in the table :ref:`tbl:optional_claims` below will be included if:
+The id token may also contain additional claims. The claims in the table :ref:`tbl:additional_claims` below will be
+included if:
 
     #) you are allowed to obtain them
-    #) they were requested in the initial authentication request (see :ref:`requested_scope_rules`)
+    #) they were requested in the initial authentication request (see :ref:`additional_claims`)
     #) the institution provides them to the InAcademia service
 
 
-.. _`tbl:optional_claims`:
+.. _`tbl:additional_claims`:
 .. list-table:: Additional (optional) id token claims
     :widths: 20 80
     :header-rows: 1
@@ -326,3 +344,4 @@ Possible errors
 .. _Successful authentication request: http://openid.net/specs/openid-connect-core-1_0.html#ImplicitAuthResponse
 .. _OpenID Provider Metadata: http://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata
 .. _ID Token Validation: http://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation
+.. _Claims Parameter in Authentication request: http://openid.net/specs/openid-connect-core-1_0.html#ClaimsParameter
