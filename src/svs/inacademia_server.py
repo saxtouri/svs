@@ -319,7 +319,7 @@ class InAcademiaMediator(object):
         """
         return hashlib.sha512(client_id + user_id + idp_entity_id).hexdigest()
 
-    def _get_extra_claims(self, identity, idp_entity_id, requested_claims):
+    def _get_extra_claims(self, identity, idp_entity_id, requested_claims, client_id):
         """Create the extra attributes (claims) requested by the RP.
 
         Extra attributes will only be returned if the RP is allowed to request them and we got them from the IdP.
@@ -327,14 +327,23 @@ class InAcademiaMediator(object):
         :param identity: assertions from the IdP about the user
         :param idp_entity_id: entity id of the IdP
         :param scope: requested scope from the RP
+        :param client_id: RP client id
         :return: a list of tuples with any extra claims to return to the RP with the id token.
         """
+
+        # Verify the client is allowed to request these claims
+        allowed = self.op.OP.cdb[client_id]["allowed_claims"]
+        for value in requested_claims:
+            if value not in allowed:
+                log_internal(logger, "Claim '{}' not in '{}' for client.".format(value, allowed), None,
+                             client_id=client_id)
+
         claims = []
-        if DOMAIN in requested_claims:
+        if DOMAIN in requested_claims and DOMAIN in allowed:
             if "schacHomeOrganization" in identity:
                 claims.append((N_("domain"), identity["schacHomeOrganization"][0]))
 
-        if COUNTRY in requested_claims:
+        if COUNTRY in requested_claims and COUNTRY in allowed:
             country = self._get_idp_country(self.sp.metadata, idp_entity_id)
             if country is not None:
                 claims.append((N_("country"), country))
@@ -367,7 +376,8 @@ class InAcademiaMediator(object):
                   auth_time]
         l = zip(attributes, values)
 
-        extra_claims = self._get_extra_claims(identity, idp_entity_id, transaction_session["claims"])
+        extra_claims = self._get_extra_claims(identity, idp_entity_id, transaction_session["claims"],
+                                              transaction_session["client_id"])
         l.extend(extra_claims)
 
         return dict(l)
