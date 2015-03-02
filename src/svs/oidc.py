@@ -120,7 +120,7 @@ class InAcademiaOpenIDConnectFrontend(object):
             return False
 
         # Verify the client is allowed to request this scope
-        allowed = self.OP.cdb[client_id]["allowed_scope_values"]
+        allowed = self.OP.cdb[client_id].get("allowed_scope_values", [])
         for value in scope:
             if value == "openid":  # Always allow 'openid' in scope
                 continue

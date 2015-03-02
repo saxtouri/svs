@@ -332,7 +332,7 @@ class InAcademiaMediator(object):
         """
 
         # Verify the client is allowed to request these claims
-        allowed = self.op.OP.cdb[client_id]["allowed_claims"]
+        allowed = self.op.OP.cdb[client_id].get("allowed_claims", [])
         for value in requested_claims:
             if value not in allowed:
                 log_internal(logger, "Claim '{}' not in '{}' for client.".format(value, allowed), None,
