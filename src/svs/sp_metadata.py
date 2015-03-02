@@ -8,9 +8,7 @@ from saml2.config import Config
 from saml2.metadata import entity_descriptor, metadata_tostring_fix
 from saml2.validate import valid_instance
 
-
-PERSISTENT_SP_KEY = "persistent"
-TRANSIENT_SP_KEY = "transient"
+from svs.filter import PERSISTENT_NAMEID, TRANSIENT_NAMEID
 
 
 def _merge_configs(default, extra):
@@ -29,13 +27,13 @@ def _merge_configs(default, extra):
 
 
 def make_metadata(base):
-    sp_configs = load_metadata(base)
+    sp_configs = load_sp_config(base)
     write_metadata(sp_configs)
 
     return sp_configs
 
 
-def load_metadata(base):
+def load_sp_config(base):
     with open("conf/sp_default.json", "r") as f:
         default_config = json.load(f)
     with open("conf/sp_persistent.json", "r") as f:
@@ -51,8 +49,8 @@ def load_metadata(base):
     transient_config = _merge_configs(default_config, transient_config)
 
     sp_configs = {
-        PERSISTENT_SP_KEY: persistent_config,
-        TRANSIENT_SP_KEY: transient_config,
+        PERSISTENT_NAMEID: persistent_config,
+        TRANSIENT_NAMEID: transient_config,
     }
 
     return sp_configs

@@ -5,26 +5,24 @@ import cherrypy
 from oic.utils.http_util import SeeOther
 from oic.utils.http_util import Response
 from saml2.client_base import Base
+from saml2.config import ONTS, SPConfig
 from saml2.httpbase import ConnectionError, HTTPBase
 from saml2.mdstore import MetaDataMDX
 from saml2.saml import Issuer, NAMEID_FORMAT_ENTITY, NAMEID_FORMAT_PERSISTENT, NAMEID_FORMAT_TRANSIENT
 from saml2.samlp import AuthnRequest
 from saml2.samlp import NameIDPolicy
 from saml2.time_util import instant
-from saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST, saml
+from saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST, sigver
 from saml2.s_utils import sid
-from saml2 import sigver, md, config
+from saml2 import md
 from saml2.attribute_converter import ac_factory
-from saml2.extension import mdui, dri, mdattr, ui, idpdisc
-import xmldsig
-import xmlenc
 
 from log_utils import log_internal
 from svs.cherrypy_util import response_to_cherrypy
 from svs.message_utils import abort_with_client_error, negative_transaction_response
-from svs.filter import get_affiliation_function, PERSISTENT_NAMEID
+from svs.filter import get_affiliation_function, PERSISTENT_NAMEID, TRANSIENT_NAMEID
 from svs.log_utils import log_transaction_idp
-from svs.sp_metadata import TRANSIENT_SP_KEY, PERSISTENT_SP_KEY, make_metadata
+from svs.sp_metadata import load_sp_config
 from svs.utils import sha1_entity_transform
 
 
@@ -40,17 +38,15 @@ class AuthnFailure(ServiceErrorException):
 
 
 class SamlSp(object):
-    def __init__(self, srv, conf, disco_srv, force_authn=False,
+    def __init__(self, conf, disco_srv, force_authn=False,
                  sign_func=None):
         """Constructor for the class.
 
-        :param srv: Usually none, but otherwise the server.
         :param conf: The SAML SP configuration
         :param disco_srv: The address to the DiscoServer
         :param force_authn: whether to force authentication
         :param sign_func: A function that signs a SAML message
         """
-        self.srv = srv
         self.idp_query_param = "IdpQuery"
         self.conf = conf
         self.disco_srv = disco_srv
@@ -59,8 +55,6 @@ class SamlSp(object):
 
         # returns list of 2-tuples (endpoint, binding)
         acs = self.conf.getattr("endpoints", "sp")["assertion_consumer_service"]
-        # Should only be one
-
         self.response_binding = acs[0][1]
         self.response_url = acs[0][0]
 
@@ -72,7 +66,7 @@ class SamlSp(object):
         self.nameid_policy = NameIDPolicy(**_cargs)
 
         # This is a simple SP
-        self.sp = Base(conf)
+        self.sp = Base(self.conf)
 
         # Since I probably didn't send the original request at least I can't
         # count on it.
@@ -224,33 +218,21 @@ class InAcademiaSAMLBackend(object):
         :param disco_url: URL to the discovery service
         :return:
         """
-        ONTS = {
-            saml.NAMESPACE: saml,
-            mdui.NAMESPACE: mdui,
-            mdattr.NAMESPACE: mdattr,
-            dri.NAMESPACE: dri,
-            ui.NAMESPACE: ui,
-            idpdisc.NAMESPACE: idpdisc,
-            md.NAMESPACE: md,
-            xmldsig.NAMESPACE: xmldsig,
-            xmlenc.NAMESPACE: xmlenc
-        }
+
         ATTRCONV = ac_factory("")
-        sp_config = config.SPConfig()
-        sp_config.xmlsec_binary = sigver.get_xmlsec_binary()
-        logger.debug("xmlsec binary: {}".format(sp_config.xmlsec_binary))
 
         http = HTTPBase(verify=False, ca_bundle=None)
         self.metadata = MetaDataMDX(sha1_entity_transform, ONTS.values(), ATTRCONV, mdx_url,
                                     None, None, http, node_name="{}:{}".format(md.EntityDescriptor.c_namespace,
                                                                                md.EntitiesDescriptor.c_tag))
-        sp_config.metadata = self.metadata
 
         self.SP = {}
-        sp_configs = make_metadata(base_url)
-        for sp_key in [TRANSIENT_SP_KEY, PERSISTENT_SP_KEY]:
-            cnf = sp_config.load(sp_configs[sp_key])
-            self.SP[sp_key] = SamlSp(None, cnf, disco_url)
+        config = load_sp_config(base_url)
+        for sp_key, conf in config.iteritems():
+            sp_conf = SPConfig()
+            sp_conf.xmlsec_binary = sigver.get_xmlsec_binary()
+            sp_conf.load(conf)
+            self.SP[sp_key] = SamlSp(sp_conf, disco_url)
 
     def redirect_to_auth(self, state, scope):
         """Send a redirect to the discovery server.
@@ -269,9 +251,9 @@ class InAcademiaSAMLBackend(object):
         """
 
         if PERSISTENT_NAMEID in scope:
-            sp_key = PERSISTENT_SP_KEY
+            sp_key = PERSISTENT_NAMEID
         else:
-            sp_key = TRANSIENT_SP_KEY
+            sp_key = TRANSIENT_NAMEID
 
         return self.SP[sp_key]
 
@@ -320,7 +302,8 @@ class InAcademiaSAMLBackend(object):
         try:
             name_id, identity, auth_time, idp_entity_id = sp.parse_auth_response(SAMLResponse, binding)
             log_internal(logger, "saml_response name_id={}".format(str(name_id).replace("\n", "")),
-                         environ=cherrypy.request, transaction_id=transaction_id, client_id=transaction_session["client_id"])
+                         environ=cherrypy.request, transaction_id=transaction_id,
+                         client_id=transaction_session["client_id"])
         except AuthnFailure:
             abort_with_client_error(transaction_id, transaction_session, cherrypy.request, logger,
                                     "User not authenticated at IdP.")
