@@ -39,9 +39,6 @@ The ``<host data dir>`` must have the following structure::
     │   ├── sp_transient.json
     ├── inAcademia
     ├── inAcademia.pub
-    ├── pki
-    │   ├── inacademia-test.crt
-    │   ├── inacademia-test.key
     ├── symkey.json
 
 where ``inacademia*`` (in the root of the directory) is the signing/encryption key for the OpenID Connect OP,
