@@ -376,7 +376,7 @@ class InAcademiaMediator(object):
                   auth_time]
         l = zip(attributes, values)
 
-        extra_claims = self._get_extra_claims(identity, idp_entity_id, transaction_session["claims"],
+        extra_claims = self._get_extra_claims(identity, idp_entity_id, transaction_session.get("claims", []),
                                               transaction_session["client_id"])
         l.extend(extra_claims)
 
