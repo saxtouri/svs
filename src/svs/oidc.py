@@ -3,14 +3,14 @@ import logging
 import time
 
 import cherrypy
-from oic.oic.message import AuthorizationRequest, AuthorizationResponse
+from oic.oic.message import AuthorizationResponse
 from oic.oic.provider import Provider
 from oic.utils.clientdb import NoClientInfoReceivedError
 from oic.utils.keyio import KeyJar, keybundle_from_local_file, dump_jwks
 from oic.utils.time_util import str_to_time
 import requests
 
-from svs.filter import AFFILIATIONS, PERSISTENT_NAMEID, TRANSIENT_NAMEID
+from svs.filter import AFFILIATIONS, PERSISTENT_NAMEID, TRANSIENT_NAMEID, SCOPE_VALUES
 from svs.utils import get_timestamp
 from svs.log_utils import log_transaction_complete, log_internal
 from svs.message_utils import abort_with_enduser_error, abort_with_client_error
@@ -124,7 +124,7 @@ class InAcademiaOpenIDConnectFrontend(object):
         for value in scope:
             if value == "openid":  # Always allow 'openid' in scope
                 continue
-            elif value not in allowed:
+            elif value in SCOPE_VALUES and value not in allowed: # A scope we understand, but client not allowed
                 log_internal(logger, "Scope value '{}' not in '{}' for client.".format(value, allowed), None,
                              client_id=client_id)
                 return False

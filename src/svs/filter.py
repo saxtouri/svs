@@ -64,3 +64,6 @@ AFFILIATIONS = {
     'faculty+staff': _is_faculty_or_staff,
     'alum': _is_alumni
 }
+
+# All scope values we understand
+SCOPE_VALUES = AFFILIATIONS.keys() + [PERSISTENT_NAMEID, TRANSIENT_NAMEID]
