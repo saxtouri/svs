@@ -1,4 +1,31 @@
+from setuptools.command.install import install as install_
+
+from babel.messages.frontend import compile_catalog
+import pkg_resources
+
 from setuptools import setup
+
+
+class compile_all_catalogs(compile_catalog):
+    """Inspired by http://pfacka.binaryparadise.com/articles/localization-of-webapplications-with-babel.html
+    """
+
+    def initialize_options(self):
+        compile_catalog.initialize_options(self)
+        self.directory = pkg_resources.resource_filename('svs', 'data/i18n/locales')
+
+    def finalize_options(self):
+        compile_catalog.finalize_options(self)
+        self.ensure_dirname('directory')
+
+    def get_outputs(self):
+        # necessary to be able to use 'pip install'
+        return []
+
+
+class install(install_):
+    sub_commands = install_.sub_commands + [('compile_all_catalogs', None)]
+
 
 setup(name='svs',
       version='0.0.1',
@@ -17,7 +44,7 @@ setup(name='svs',
       packages=['svs'],
       package_data={
           'svs': [
-              'data/i18n/locales/*/LC_MESSAGES/*.mo',
+              'data/i18n/locales/*/LC_MESSAGES/*.po',
               'templates/*.mako',
               'site/static/*',
           ],
@@ -32,5 +59,11 @@ setup(name='svs',
               ('**/templates/**.mako', 'mako', None)
           ]
       },
-      tests_require=["pytest", "mock"],
+      cmdclass={
+          'install': install,
+          'compile_all_catalogs': compile_all_catalogs
+      },
+      setup_requires=['Babel'],
+      install_requires=['Babel'],
+      tests_require=['pytest', 'mock'],
 )
