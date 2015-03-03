@@ -258,9 +258,9 @@ class InAcademiaMediator(object):
             raise cherrypy.HTTPError(404, _("Page not found."))
 
         state = json.loads(urllib.unquote_plus(state))
-        transaction_state = self._decode_state(state["state"])
-        negative_transaction_response(state["state"], transaction_state, cherrypy.request, "User did not give consent.",
-                                      state["idp_entity_id"])
+        transaction_session = self._decode_state(state["state"])
+        negative_transaction_response(state["state"], transaction_session, cherrypy.request, logger,
+                                      "User did not give consent.", state["idp_entity_id"])
 
     def consent_index(self, lang=None, state=None, released_attributes=None):
         """Where the i18n of the consent page arrives.
