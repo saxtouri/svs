@@ -231,6 +231,7 @@ class InAcademiaSAMLBackend(object):
         for sp_key, conf in config.iteritems():
             sp_conf = SPConfig()
             sp_conf.xmlsec_binary = sigver.get_xmlsec_binary()
+            sp_conf.metadata = self.metadata
             sp_conf.load(conf)
             self.SP[sp_key] = SamlSp(sp_conf, disco_url)
 
