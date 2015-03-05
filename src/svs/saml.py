@@ -320,6 +320,8 @@ class InAcademiaSAMLBackend(object):
                                           idp_entity_id)
 
         _user_id = self.get_name_id(name_id, identity, scope)
+        log_internal(logger, "NameID from the IdP: '{}'.".format(_user_id), cherrypy.request, transaction_id,
+                     transaction_session["client_id"])
         if _user_id is None:
             negative_transaction_response(transaction_id, transaction_session, cherrypy.request, logger,
                                           "The users identity could not be provided.",
