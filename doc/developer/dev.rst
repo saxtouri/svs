@@ -16,7 +16,7 @@ directory on the host which is mounted as a volume inside the Docker container (
 Internationalization
 ####################
 
-InAcademia uses the ``Babel`` package for internationalization (i18n).
+InAcademia uses the ``Babel`` distribution for internationalization (i18n).
 
 
 When adding any new strings to the code wrap the message key with "gettext", e.g.::
@@ -34,3 +34,10 @@ Updated .po file with new keys which has been added to the po template file::
 Generate .mo file::
 
     python setup.py compile_catalog --directory src/svs/data/i18n/locales/ --locale en
+
+or using the custom command in setup.py (which specified the default directory for .po files in the project)::
+
+    python setup.py compile_all_catalogs
+
+This custom command is also integrated as a subcommand of ``./setup.py install``, which makes sure the .mo files are
+automatically generated at install time.
