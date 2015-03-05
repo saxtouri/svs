@@ -13,14 +13,7 @@ from svs.filter import PERSISTENT_NAMEID, TRANSIENT_NAMEID
 
 def _merge_configs(default, extra):
     result = copy.deepcopy(default)
-    sp_conf = result["service"]["sp"]
-
-    for key, value in extra["service"]["sp"].iteritems():
-        if isinstance(value, list):
-            sp_conf[key].extend(value)
-        else:
-            sp_conf[key] = value
-
+    result["service"]["sp"].update(extra["service"]["sp"])
     result["entityid"] = extra["entityid"]
 
     return result
