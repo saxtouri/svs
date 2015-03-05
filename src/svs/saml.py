@@ -233,7 +233,7 @@ class InAcademiaSAMLBackend(object):
             sp_conf.xmlsec_binary = sigver.get_xmlsec_binary()
             sp_conf.metadata = self.metadata
             sp_conf.load(conf)
-            self.SP[sp_key] = SamlSp(sp_conf, disco_url)
+            self.SP[sp_key] = SamlSp(sp_conf, disco_url, force_authn=True)
 
     def redirect_to_auth(self, state, scope):
         """Send a redirect to the discovery server.
