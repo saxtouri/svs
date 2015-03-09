@@ -26,22 +26,28 @@ from svs.utils import deconstruct_state, construct_state, N_
 logger = logging.getLogger(__name__)
 
 
-def setup_logging(config_dict=None, default_path='logging_conf.json', default_level=logging.INFO, env_key='LOG_CFG'):
-    """Setup logging configuration"""
+def setup_logging(config_dict=None, env_key="LOG_CFG", config_file="conf/logging_conf.json", level=logging.INFO):
+    """Setup logging configuration.
 
+    The configuration is fetched in order from:
+        1. Supplied configuration dictionary
+        2. Configuration file specified in environment variable 'LOG_CFG'
+        3. Configuration file specified as parameter
+        4. Basic config, configured with log level 'INFO'
+    """
     if config_dict is not None:
         logging.config.dictConfig(config_dict)
     else:
-        path = default_path
-        value = os.getenv(env_key, None)
-        if value:
-            path = value
-        if os.path.exists(path):
-            with open(path, 'rt') as f:
+        env_conf = os.getenv(env_key, None)
+        if env_conf:
+            config_file = env_conf
+
+        if os.path.exists(config_file):
+            with open(config_file, 'r') as f:
                 config = json.load(f)
             logging.config.dictConfig(config)
         else:
-            logging.basicConfig(level=default_level)
+            logging.basicConfig(level=level)
 
 
 def main():
@@ -63,9 +69,7 @@ def main():
     if not base_url.endswith("/"):
         base_url += "/"
 
-    with open("conf/logging_conf.json", "r") as f:
-        logging_conf = json.load(f)
-    setup_logging(config_dict=logging_conf)
+    setup_logging()
 
     # add directory to PATH environment variable to find xmlsec
     os.environ["PATH"] += os.pathsep + '/usr/local/bin'
