@@ -2,7 +2,7 @@ import cherrypy
 from mako.lookup import TemplateLookup
 import pkg_resources
 
-from .i18n_tool import ugettext as _
+from svs.i18n_tool import ugettext_lazy as N_
 
 
 __author__ = 'regu0004'
@@ -13,16 +13,11 @@ LOOKUP = TemplateLookup(directories=[pkg_resources.resource_filename("svs", "tem
 
 
 class EndUserErrorResponse(cherrypy.HTTPError):
-    def __init__(self, timestamp, uid, error_key, message, proposed_solution=None, form_action="/error"):
-        if proposed_solution is None:
-            proposed_solution = _("Please return to the service you were using and try again.")
-
+    def __init__(self, timestamp, uid, message, form_action="/error"):
         error = {
-            "error_key": error_key,
             "uid": uid,
             "timestamp": self._format_timestamp(timestamp),
             "message": message,
-            "proposed_solution": proposed_solution,
         }
 
         argv = {
@@ -49,8 +44,9 @@ class ConsentPage(object):
     TEMPLATE = "consent.mako"
 
     @classmethod
-    def render(cls, base_url, rp_display_name, idp_entity_id, released_attributes, relay_state):
-        question = _("consent_question").format(rp_display_name=rp_display_name)
+    def render(cls, client_name, idp_entity_id, released_claims, relay_state, form_action="/consent"):
+        question = N_("<strong>'{client_name}'</strong> requires the information below to be transferred:").format(
+            client_name=client_name)
 
         state = {
             "idp_entity_id": idp_entity_id,
@@ -58,7 +54,7 @@ class ConsentPage(object):
         }
 
         return LOOKUP.get_template(cls.TEMPLATE).render(consent_question=question,
-                                                        released_attributes=released_attributes,
+                                                        released_claims=released_claims,
                                                         state=state,
-                                                        form_action="{}consent".format(base_url),
+                                                        form_action=form_action,
                                                         language=cherrypy.response.i18n.locale.language)

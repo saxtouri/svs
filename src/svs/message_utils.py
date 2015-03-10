@@ -4,17 +4,16 @@ from oic.oic.message import AuthorizationErrorResponse
 from svs.user_interaction import EndUserErrorResponse
 from svs.log_utils import log_transaction_fail, log_negative_transaction_complete
 from svs.utils import now, get_new_error_uid, get_timestamp
-from svs.i18n_tool import ugettext as _
 
 
 __author__ = 'regu0004'
 
 
-def abort_with_enduser_error(transaction_id, client_id, environ, logger, log_msg, **kwargs):
+def abort_with_enduser_error(transaction_id, client_id, environ, logger, error_message, log_msg, **kwargs):
     """Construct and show error page for the user.
     """
     t, uid = _log_fail(logger, log_msg, transaction_id, client_id, environ, **kwargs)
-    raise EndUserErrorResponse(t, uid, "error_general", _("error_general"))
+    raise EndUserErrorResponse(t, uid, error_message)
 
 
 def abort_with_client_error(transaction_id, transaction_session, environ, logger, log_msg, error="access_denied",

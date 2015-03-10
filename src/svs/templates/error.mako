@@ -41,7 +41,7 @@
         <div class="row">
             <div class="col-md-12">
                 <p>
-                    ${error["message"]}
+                    ${_(error["message"])}
                 </p>
             </div>
         </div>
@@ -63,9 +63,6 @@
 
         <hr>
 
-        ${error["proposed_solution"]}
-
-        <hr>
         <footer>
             <a href="https://www.inacademia.org">InAcademia</a> |
             <a href="https://www.inacademia.org/eula/">${_("Terms of service")}</a>

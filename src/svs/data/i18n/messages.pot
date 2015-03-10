@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: svs 0.0.1\n"
+"Project-Id-Version: svs 0.1.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-03-03 11:01+0100\n"
+"POT-Creation-Date: 2015-03-10 16:04+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,46 +17,53 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.3\n"
 
-#: src/svs/inacademia_server.py:191 src/svs/inacademia_server.py:208
-#: src/svs/inacademia_server.py:245 src/svs/inacademia_server.py:258
-#: src/svs/inacademia_server.py:271
+#: src/svs/inacademia_server.py:195 src/svs/inacademia_server.py:212
+#: src/svs/inacademia_server.py:248 src/svs/inacademia_server.py:261
+#: src/svs/inacademia_server.py:274
 msgid "Page not found."
 msgstr ""
 
-#: src/svs/inacademia_server.py:213
-msgid "error_key"
+#: src/svs/inacademia_server.py:345
+msgid "Domain"
 msgstr ""
 
-#: src/svs/inacademia_server.py:344
-msgid "domain"
+#: src/svs/inacademia_server.py:350
+msgid "Country"
 msgstr ""
 
-#: src/svs/inacademia_server.py:349
-msgid "country"
+#: src/svs/inacademia_server.py:374
+msgid "Affiliation"
 msgstr ""
 
-#: src/svs/inacademia_server.py:373
-msgid "affiliation"
+#: src/svs/inacademia_server.py:374
+msgid "Identifier"
 msgstr ""
 
-#: src/svs/inacademia_server.py:373
-msgid "identifier"
+#: src/svs/inacademia_server.py:374
+msgid "Authentication time"
 msgstr ""
 
-#: src/svs/inacademia_server.py:373
-msgid "authentication time"
+#: src/svs/inacademia_server.py:411 src/svs/oidc.py:92
+msgid ""
+"We could not complete your validation because an error occurred while "
+"handling your request. Please return to the service which initiated the "
+"validation request and try again."
 msgstr ""
 
-#: src/svs/message_utils.py:17
-msgid "error_general"
+#: src/svs/oidc.py:154
+msgid ""
+"The authentication request could not be processed. Please return to the "
+"service which initiated the validation request and try again."
 msgstr ""
 
-#: src/svs/user_interaction.py:18
-msgid "Please return to the service you were using and try again."
+#: src/svs/oidc.py:161
+msgid "Configuration error for the service."
 msgstr ""
 
-#: src/svs/user_interaction.py:53
-msgid "consent_question"
+#: src/svs/user_interaction.py:48
+msgid ""
+"<strong>'{client_name}'</strong> requires the information below to be "
+"transferred:"
 msgstr ""
 
 #: src/svs/templates/consent.mako:38
@@ -71,7 +78,7 @@ msgstr ""
 msgid "No, cancel"
 msgstr ""
 
-#: src/svs/templates/consent.mako:81 src/svs/templates/error.mako:71
+#: src/svs/templates/consent.mako:81 src/svs/templates/error.mako:68
 msgid "Terms of service"
 msgstr ""
 

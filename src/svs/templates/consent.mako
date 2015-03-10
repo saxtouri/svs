@@ -1,7 +1,7 @@
 <%
-    def print_released_attributes(released_attributes):
+    def print_released_claims(released_claims):
         result = ""
-        for attribute, value in released_attributes.iteritems():
+        for attribute, value in released_claims.iteritems():
             attribute_title = _(attribute).capitalize()
 
             # more human-friendly and avoid "u'" prefix for unicode strings in list
@@ -46,12 +46,12 @@
                         <option value="nl">NL</option>
                     </select>
                     <input type="hidden" name="state" value="${to_json(state) | u}">
-                    <input type="hidden" name="released_attributes" value="${to_json(released_attributes) | u}">
+                    <input type="hidden" name="released_claims" value="${to_json(released_claims) | u}">
                 </form>
             </div>
         </div>
 
-        ${consent_question}
+        ${_(consent_question)}
 
         <br>
         <hr>
@@ -60,7 +60,7 @@
         <form name="allow_consent" action="${form_action}/allow" method="GET" style="float: left">
             <input id="submit_ok" type="submit" value="${_('Ok, accept')}">
             <input type="hidden" name="state" value="${to_json(state) | u}">
-            <input type="hidden" name="released_attributes" value="${to_json(released_attributes) | u}">
+            <input type="hidden" name="released_claims" value="${to_json(released_claims) | u}">
         </form>
         <form name="deny_consent" action="${form_action}/deny" method="GET" style="float: left; clear: right;">
             <input id="submit_deny" type="submit" value="${_('No, cancel')}">
@@ -71,7 +71,7 @@
         <br>
 
         <div style="clear: both;">
-            ${print_released_attributes(released_attributes)}
+            ${print_released_claims(released_claims)}
         </div>
         <br>
 

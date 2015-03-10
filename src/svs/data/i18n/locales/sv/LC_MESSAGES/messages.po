@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: InAcademia 0.1.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-03-03 11:01+0100\n"
-"PO-Revision-Date: 2015-03-03 11:18+0100\n"
+"POT-Creation-Date: 2015-03-10 16:04+0100\n"
+"PO-Revision-Date: 2015-03-10 16:14+0100\n"
 "Last-Translator: Rebecka Gulliksson <rebecka.gulliksson@umu.se>\n"
 "Language-Team: InAcademia <tech@inacademia.org>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -19,47 +19,61 @@ msgstr ""
 "Language: sv\n"
 "X-Generator: Poedit 1.7.4\n"
 
-#: src/svs/inacademia_server.py:191 src/svs/inacademia_server.py:208
-#: src/svs/inacademia_server.py:245 src/svs/inacademia_server.py:258
-#: src/svs/inacademia_server.py:271
+#: src/svs/inacademia_server.py:195 src/svs/inacademia_server.py:212
+#: src/svs/inacademia_server.py:248 src/svs/inacademia_server.py:261
+#: src/svs/inacademia_server.py:274
 msgid "Page not found."
 msgstr "Sidan kunde inte hittas."
 
-#: src/svs/inacademia_server.py:213
-msgid "error_key"
+#: src/svs/inacademia_server.py:345
+msgid "Domain"
+msgstr "Domän"
+
+#: src/svs/inacademia_server.py:350
+msgid "Country"
+msgstr "Land"
+
+#: src/svs/inacademia_server.py:374
+msgid "Affiliation"
+msgstr "Anknytning"
+
+#: src/svs/inacademia_server.py:374
+msgid "Identifier"
+msgstr "Identifierare"
+
+#: src/svs/inacademia_server.py:374
+msgid "Authentication time"
+msgstr "Tid för autentisering"
+
+#: src/svs/inacademia_server.py:411 src/svs/oidc.py:92
+msgid ""
+"We could not complete your validation because an error occurred while "
+"handling your request. Please return to the service which initiated the "
+"validation request and try again."
 msgstr ""
+"Vi kunde inte slutföra din validering eftersom ett fel inträffade medan "
+"vi hanterade din förfrågan. Var vänlig återgå till tjänsten som "
+"initierade valideringen och försök igen."
 
-#: src/svs/inacademia_server.py:344
-msgid "domain"
-msgstr "domän"
+#: src/svs/oidc.py:154
+msgid ""
+"The authentication request could not be processed. Please return to the "
+"service which initiated the validation request and try again."
+msgstr ""
+"Autentiseringsförfrågan kunde inte hanteras. Var vänlig återgå till "
+"tjänsten som initierade valideringen och försök igen."
 
-#: src/svs/inacademia_server.py:349
-msgid "country"
-msgstr "land"
+#: src/svs/oidc.py:161
+msgid "Configuration error for the service."
+msgstr "Konfigurationsfel för tjänsten."
 
-#: src/svs/inacademia_server.py:373
-msgid "affiliation"
-msgstr "anknytning"
-
-#: src/svs/inacademia_server.py:373
-msgid "identifier"
-msgstr "identifierare"
-
-#: src/svs/inacademia_server.py:373
-msgid "authentication time"
-msgstr "tid för autentisering"
-
-#: src/svs/message_utils.py:17
-msgid "error_general"
-msgstr "Vi kunde inte slutföra din validering eftersom ett fel inträffade under din förfrågan.Var vänlig återgå till tjänsten du försökte använda och försök igen."
-
-#: src/svs/user_interaction.py:18
-msgid "Please return to the service you were using and try again."
-msgstr "Var vänlig återgå till tjänsten du försökte använda och försök igen."
-
-#: src/svs/user_interaction.py:53
-msgid "consent_question"
-msgstr "<strong>{rp_display_name}</strong> kräver att nedanstående information överförs."
+#: src/svs/user_interaction.py:48
+msgid ""
+"<strong>'{client_name}'</strong> requires the information below to be "
+"transferred:"
+msgstr ""
+"<strong>'{client_name}'</strong> kräver att nedanstående information "
+"överförs:"
 
 #: src/svs/templates/consent.mako:38
 msgid "Consent - Your consent is required to continue."
@@ -73,7 +87,7 @@ msgstr "Ok, acceptera"
 msgid "No, cancel"
 msgstr "Nej, avbryt"
 
-#: src/svs/templates/consent.mako:81 src/svs/templates/error.mako:71
+#: src/svs/templates/consent.mako:81 src/svs/templates/error.mako:68
 msgid "Terms of service"
 msgstr "Villkor för tjänsten"
 
@@ -88,6 +102,3 @@ msgstr "Tidstämpel"
 #: src/svs/templates/error.mako:58
 msgid "Error id"
 msgstr "Fel id"
-
-#~ msgid "Hello world!"
-#~ msgstr "Hej världen!"

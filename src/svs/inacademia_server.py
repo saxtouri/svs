@@ -17,8 +17,7 @@ from svs.oidc import InAcademiaOpenIDConnectFrontend
 from svs.saml import InAcademiaSAMLBackend
 from svs.user_interaction import ConsentPage, EndUserErrorResponse
 from svs.i18n_tool import ugettext as _
-from svs.filter import COUNTRY, \
-    DOMAIN, AFFILIATION_ATTRIBUTE
+from svs.filter import COUNTRY, DOMAIN, AFFILIATION_ATTRIBUTE
 from svs.log_utils import log_transaction_start, log_internal
 from svs.utils import deconstruct_state, construct_state, N_
 
@@ -214,7 +213,6 @@ class InAcademiaMediator(object):
         self._set_language(lang)
 
         error = json.loads(urllib.unquote_plus(error))
-        error["message"] = _(error["error_key"])  # Re-translate the error message
         raise EndUserErrorResponse(**error)
 
     def webfinger(self, rel=None, resource=None):
@@ -240,18 +238,18 @@ class InAcademiaMediator(object):
 
         return response_to_cherrypy(self.op.OP.providerinfo_endpoint())
 
-    def consent_allow(self, state=None, released_attributes=None):
+    def consent_allow(self, state=None, released_claims=None):
         """Where the approved consent arrives.
 
         This function is mapped explicitly using PathDiscpatcher.
         """
-        if state is None or released_attributes is None:
+        if state is None or released_claims is None:
             raise cherrypy.HTTPError(404, _("Page not found."))
 
         state = json.loads(urllib.unquote_plus(state))
-        released_attributes = json.loads(urllib.unquote_plus(released_attributes))
+        released_claims = json.loads(urllib.unquote_plus(released_claims))
         transaction_session = self._decode_state(state["state"])
-        return self.op.id_token(released_attributes, state["idp_entity_id"], state["state"], transaction_session)
+        return self.op.id_token(released_claims, state["idp_entity_id"], state["state"], transaction_session)
 
     def consent_deny(self, state=None):
         """Where the denied consent arrives.
@@ -266,23 +264,22 @@ class InAcademiaMediator(object):
         negative_transaction_response(state["state"], transaction_session, cherrypy.request, logger,
                                       "User did not give consent.", state["idp_entity_id"])
 
-    def consent_index(self, lang=None, state=None, released_attributes=None):
+    def consent_index(self, lang=None, state=None, released_claims=None):
         """Where the i18n of the consent page arrives.
 
-        This function is mapped explicitly using PathDiscpatcher.
+        This function is mapped explicitly using PathDispatcher.
         """
-        if state is None or released_attributes is None:
+        if state is None or released_claims is None:
             raise cherrypy.HTTPError(404, _("Page not found."))
 
         self._set_language(lang)
 
         state = json.loads(urllib.unquote_plus(state))
         rp_client_id = self._decode_state(state["state"])["client_id"]
-        released_attributes = json.loads(urllib.unquote_plus(released_attributes))
+        released_claims = json.loads(urllib.unquote_plus(released_claims))
 
-        display_name = self._get_client_display_name(rp_client_id)
-        return ConsentPage.render(self.op.OP.baseurl, display_name, state["idp_entity_id"], released_attributes,
-                                  state["state"])
+        client_name = self._get_client_name(rp_client_id)
+        return ConsentPage.render(client_name, state["idp_entity_id"], released_claims, state["state"])
 
     def acs_post(self, SAMLResponse=None, RelayState=None, **kwargs):
         """Where the SAML Authentication Response arrives.
@@ -310,9 +307,8 @@ class InAcademiaMediator(object):
         released_claims = self._get_claims_to_release(user_id, identity, auth_time, idp_entity_id,
                                                       transaction_session)
 
-        display_name = self._get_client_display_name(transaction_session["client_id"])
-        return ConsentPage.render(self.op.OP.baseurl, display_name, idp_entity_id, released_claims,
-                                  RelayState)
+        client_name = self._get_client_name(transaction_session["client_id"])
+        return ConsentPage.render(client_name, idp_entity_id, released_claims, RelayState)
 
     def _generate_subject_id(self, client_id, user_id, idp_entity_id):
         """Construct the subject identifier for the ID Token.
@@ -324,9 +320,9 @@ class InAcademiaMediator(object):
         return hashlib.sha512(client_id + user_id + idp_entity_id).hexdigest()
 
     def _get_extra_claims(self, identity, idp_entity_id, requested_claims, client_id):
-        """Create the extra attributes (claims) requested by the RP.
+        """Create the extra claims requested by the RP.
 
-        Extra attributes will only be returned if the RP is allowed to request them and we got them from the IdP.
+        Extra claims will only be returned if the RP is allowed to request them and we got them from the IdP.
 
         :param identity: assertions from the IdP about the user
         :param idp_entity_id: entity id of the IdP
@@ -345,12 +341,12 @@ class InAcademiaMediator(object):
         claims = []
         if DOMAIN in requested_claims and DOMAIN in allowed:
             if "schacHomeOrganization" in identity:
-                claims.append((N_("domain"), identity["schacHomeOrganization"][0]))
+                claims.append((N_("Domain"), identity["schacHomeOrganization"][0]))
 
         if COUNTRY in requested_claims and COUNTRY in allowed:
             country = self._get_idp_country(self.sp.metadata, idp_entity_id)
             if country is not None:
-                claims.append((N_("country"), country))
+                claims.append((N_("Country"), country))
 
         return claims
 
@@ -365,7 +361,7 @@ class InAcademiaMediator(object):
 
     def _get_claims_to_release(self, user_id, identity, auth_time, idp_entity_id, transaction_session):
         """
-        Compile a dictionary of a all attributes (claims) we will release to the client.
+        Compile a dictionary of a all claims we will release to the client.
 
         :param user_id: identifier for the user
         :param identity: assertions about the user from the IdP
@@ -374,7 +370,7 @@ class InAcademiaMediator(object):
         :param transaction_session: transaction data
         :return:
         """
-        attributes = [N_("affiliation"), N_("identifier"), N_("authentication time")]
+        attributes = [N_("Affiliation"), N_("Identifier"), N_("Authentication time")]
         values = [identity[AFFILIATION_ATTRIBUTE],
                   self._generate_subject_id(transaction_session["client_id"], user_id, idp_entity_id),
                   auth_time]
@@ -411,6 +407,9 @@ class InAcademiaMediator(object):
             return deconstruct_state(state, self.key_bundle.keys())
         except DecryptionFailed as e:
             abort_with_enduser_error(state, "-", cherrypy.request, logger,
+                                     _("We could not complete your validation because an error occurred while handling "
+                                       "your request. Please return to the service which initiated the validation "
+                                       "request and try again."),
                                      "Transaction state missing or broken in incoming response.")
 
     def _encode_state(self, payload):
@@ -421,7 +420,7 @@ class InAcademiaMediator(object):
 
         return construct_state(payload, self.key_bundle.get_key_with_kid(_kids[-1]))
 
-    def _get_client_display_name(self, client_id):
+    def _get_client_name(self, client_id):
         """Get the display name for the client.
 
         :return: the clients display name, or client_id if no display name is known.

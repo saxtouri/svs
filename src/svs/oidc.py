@@ -14,6 +14,7 @@ from svs.filter import AFFILIATIONS, PERSISTENT_NAMEID, TRANSIENT_NAMEID, SCOPE_
 from svs.utils import get_timestamp
 from svs.log_utils import log_transaction_complete, log_internal
 from svs.message_utils import abort_with_enduser_error, abort_with_client_error
+from svs.i18n_tool import ugettext as _
 
 
 __author__ = 'regu0004'
@@ -47,10 +48,10 @@ class InAcademiaOpenIDConnectFrontend(object):
             logger.exception("Signing and encryption keys could not be written to jwks.json.")
             raise
 
-    def id_token(self, released_attributes, idp_entity_id, transaction_id, transaction_session):
+    def id_token(self, released_claims, idp_entity_id, transaction_id, transaction_session):
         """Make a JWT encoded id token and pass it to the redirect URI.
 
-        :param released_attributes: dictionary containing the following
+        :param released_claims: dictionary containing the following
             user_id: identifier for the user (as delivered by the IdP, dependent on whether transient or persistent
                         id was requested)
             auth_time: time of the authentication reported from the IdP
@@ -59,8 +60,8 @@ class InAcademiaOpenIDConnectFrontend(object):
         :return: raises cherrypy.HTTPRedirect.
         """
 
-        identifier = released_attributes["identifier"]
-        auth_time = released_attributes["authentication time"]
+        identifier = released_claims["Identifier"]
+        auth_time = released_claims["Authentication time"]
 
         # have to convert text representation into seconds since epoch
         _time = time.mktime(str_to_time(auth_time))
@@ -68,7 +69,7 @@ class InAcademiaOpenIDConnectFrontend(object):
         # construct the OIDC response
         transaction_session["sub"] = identifier
 
-        extra_claims = {k: released_attributes[k] for k in ["country", "domain"] if k in released_attributes}
+        extra_claims = {k: released_claims[k] for k in ["country", "domain"] if k in released_claims}
         _jwt = self.OP.id_token_as_signed_jwt(transaction_session, loa="", auth_time=_time, exp={"minutes": 30},
                                               extra_claims=extra_claims)
 
@@ -88,13 +89,21 @@ class InAcademiaOpenIDConnectFrontend(object):
         if "redirect_uri" in transaction_session:
             _ruri = transaction_session["redirect_uri"]
         else:
+            _error_msg = _("We could not complete your validation because an error occurred while "
+                           "handling your request. Please return to the service which initiated the "
+                           "validation request and try again.")
             try:
                 cinfo = self.OP.cdb[transaction_session["client_id"]]
                 _ruri = cinfo["redirect_uris"][0]
             except NoClientInfoReceivedError as e:
                 abort_with_enduser_error(transaction_id, transaction_session["client_id"], cherrypy.request, logger,
+                                         _error_msg,
                                          "Unknown RP client id '{}': '{}'.".format(transaction_session["client_id"],
                                                                                    str(e)))
+            except requests.exceptions.RequestException as e:
+                abort_with_enduser_error("-", transaction_session["client_id"], cherrypy.request, logger,
+                                         _error_msg,
+                                         "Failed to get client metadata from MDQ server.", exc_info=True)
 
         location = authzresp.request(_ruri, True)
         logger.debug("Redirected to: '{}' ({})".format(location, type(location)))
@@ -124,7 +133,7 @@ class InAcademiaOpenIDConnectFrontend(object):
         for value in scope:
             if value == "openid":  # Always allow 'openid' in scope
                 continue
-            elif value in SCOPE_VALUES and value not in allowed: # A scope we understand, but client not allowed
+            elif value in SCOPE_VALUES and value not in allowed:  # A scope we understand, but client not allowed
                 log_internal(logger, "Scope value '{}' not in '{}' for client.".format(value, allowed), None,
                              client_id=client_id)
                 return False
@@ -142,26 +151,34 @@ class InAcademiaOpenIDConnectFrontend(object):
             areq = self.OP.server.parse_authorization_request(query=query_string)
         except Exception as e:
             abort_with_enduser_error("-", "-", cherrypy.request, logger,
+                                     _("The authentication request could not be processed. Please return to the "
+                                       "service which initiated the validation request and try again."),
                                      "The authentication request '{}' could not be processed.".format(query_string),
                                      exc_info=True)
 
         # Verify it's a client_id I recognize
         client_id = areq["client_id"]
+        _error_msg = _("Configuration error for the service.")
+
         try:
             cinfo = self.OP.cdb[client_id]
         except NoClientInfoReceivedError as e:
             abort_with_enduser_error("-", client_id, cherrypy.request, logger,
+                                     _error_msg,
                                      "Unknown RP client id '{}': '{}'.".format(client_id, str(e)))
         except requests.exceptions.RequestException as e:
             abort_with_enduser_error("-", client_id, cherrypy.request, logger,
+                                     _error_msg,
                                      "Failed to get client metadata from MDQ server.", exc_info=True)
 
         # verify that the redirect_uri is sound
         if "redirect_uri" not in areq:
             abort_with_enduser_error("-", client_id, cherrypy.request, logger,
+                                     _error_msg,
                                      "Missing redirect URI in authentication request.")
         elif areq["redirect_uri"] not in cinfo["redirect_uris"]:
             abort_with_enduser_error("-", client_id, cherrypy.request, logger,
+                                     _error_msg,
                                      "Unknown redirect URI in authentication request: '{}' not in '{}'".format(
                                          areq["redirect_uri"],
                                          cinfo["redirect_uris"]))
