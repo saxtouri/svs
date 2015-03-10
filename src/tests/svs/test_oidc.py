@@ -75,6 +75,20 @@ class TestInAcademiaOpenIDConnectFrontend(object):
 
         assert TestInAcademiaOpenIDConnectFrontend.OP.verify_authn_request(AuthorizationRequest(**args).to_urlencoded())
 
+    def test_response_type_code_with_missing_nonce(self):
+        client_id = "client1"
+        args = {
+            "client_id": client_id,
+            "redirect_uri": TestInAcademiaOpenIDConnectFrontend.METADATA[client_id]["redirect_uris"][0]
+        }
+        args.update(TestInAcademiaOpenIDConnectFrontend.REQUEST_ARGS)
+        del args["nonce"]
+        args["response_type"] = "code"
+
+        with pytest.raises(cherrypy.HTTPRedirect) as exc_info:
+            assert TestInAcademiaOpenIDConnectFrontend.OP.verify_authn_request(AuthorizationRequest(**args).to_urlencoded())
+
+
     @patch("cherrypy.response")
     def test_unknown_client_id(self, mock_cherrypy_resp):
         args = {

@@ -169,17 +169,8 @@ class InAcademiaOpenIDConnectFrontend(object):
         # Create the state variable
         transaction_session = {
             "client_id": client_id,
-            "nonce": areq["nonce"],
-            "scope": areq["scope"],
             "redirect_uri": areq["redirect_uri"],
-            "start_time": get_timestamp()
         }
-
-        if "state" in areq:
-            transaction_session["state"] = areq["state"]
-
-        if "claims" in areq:
-            transaction_session["claims"] = areq["claims"]["id_token"].to_dict()
 
         # Verify that the response_type if present is id_token
         try:
@@ -191,8 +182,21 @@ class InAcademiaOpenIDConnectFrontend(object):
                                     error_description="Only response_type 'id_token' is supported.")
 
         if not self._verify_scope(areq["scope"], client_id):
-            abort_with_client_error("-", transaction_session, cherrypy.request, logger, "Invalid scope '{}'".format(areq["scope"]),
+            abort_with_client_error("-", transaction_session, cherrypy.request, logger,
+                                    "Invalid scope '{}'".format(areq["scope"]),
                                     error="invalid_scope",
                                     error_description="The specified scope '{}' is not valid.".format(areq["scope"]))
+
+        transaction_session.update({
+            "nonce": areq["nonce"],
+            "scope": areq["scope"],
+            "start_time": get_timestamp()
+        })
+
+        if "state" in areq:
+            transaction_session["state"] = areq["state"]
+
+        if "claims" in areq:
+            transaction_session["claims"] = areq["claims"]["id_token"].to_dict()
 
         return transaction_session
