@@ -146,28 +146,29 @@ class InAcademiaOpenIDConnectFrontend(object):
                                      exc_info=True)
 
         # Verify it's a client_id I recognize
+        client_id = areq["client_id"]
         try:
-            cinfo = self.OP.cdb[areq["client_id"]]
+            cinfo = self.OP.cdb[client_id]
         except NoClientInfoReceivedError as e:
-            abort_with_enduser_error("-", "-", cherrypy.request, logger,
-                                     "Unknown RP client id '{}': '{}'.".format(areq["client_id"], str(e)))
+            abort_with_enduser_error("-", client_id, cherrypy.request, logger,
+                                     "Unknown RP client id '{}': '{}'.".format(client_id, str(e)))
         except requests.exceptions.RequestException as e:
-            abort_with_enduser_error("-", "-", cherrypy.request, logger,
+            abort_with_enduser_error("-", client_id, cherrypy.request, logger,
                                      "Failed to get client metadata from MDQ server.", exc_info=True)
 
         # verify that the redirect_uri is sound
         if "redirect_uri" not in areq:
-            abort_with_enduser_error("-", "-", cherrypy.request, logger,
+            abort_with_enduser_error("-", client_id, cherrypy.request, logger,
                                      "Missing redirect URI in authentication request.")
         elif areq["redirect_uri"] not in cinfo["redirect_uris"]:
-            abort_with_enduser_error("-", "-", cherrypy.request, logger,
+            abort_with_enduser_error("-", client_id, cherrypy.request, logger,
                                      "Unknown redirect URI in authentication request: '{}' not in '{}'".format(
                                          areq["redirect_uri"],
                                          cinfo["redirect_uris"]))
 
         # Create the state variable
         transaction_session = {
-            "client_id": areq["client_id"],
+            "client_id": client_id,
             "nonce": areq["nonce"],
             "scope": areq["scope"],
             "redirect_uri": areq["redirect_uri"],
@@ -189,7 +190,7 @@ class InAcademiaOpenIDConnectFrontend(object):
                                     error="unsupported_response_type",
                                     error_description="Only response_type 'id_token' is supported.")
 
-        if not self._verify_scope(areq["scope"], areq["client_id"]):
+        if not self._verify_scope(areq["scope"], client_id):
             abort_with_client_error("-", transaction_session, cherrypy.request, logger, "Invalid scope '{}'".format(areq["scope"]),
                                     error="invalid_scope",
                                     error_description="The specified scope '{}' is not valid.".format(areq["scope"]))
