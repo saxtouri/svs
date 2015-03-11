@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 import time
@@ -10,8 +11,9 @@ from oic.utils.keyio import KeyJar, keybundle_from_local_file, dump_jwks
 from oic.utils.time_util import str_to_time
 import requests
 
-from svs.filter import AFFILIATIONS, PERSISTENT_NAMEID, TRANSIENT_NAMEID, SCOPE_VALUES
-from svs.utils import get_timestamp
+from svs.filter import AFFILIATIONS, PERSISTENT_NAMEID, TRANSIENT_NAMEID, SCOPE_VALUES, DOMAIN, COUNTRY, \
+    AFFILIATION_ATTRIBUTE
+from svs.utils import get_timestamp, N_
 from svs.log_utils import log_transaction_complete, log_internal
 from svs.message_utils import abort_with_enduser_error, abort_with_client_error
 from svs.i18n_tool import ugettext as _
@@ -217,3 +219,78 @@ class InAcademiaOpenIDConnectFrontend(object):
             transaction_session["claims"] = areq["claims"]["id_token"].to_dict()
 
         return transaction_session
+
+    def get_claims_to_release(self, user_id, identity, auth_time, idp_entity_id, idp_metadata_func,
+                              transaction_session):
+        """
+        Compile a dictionary of a all claims we will release to the client.
+
+        :param user_id: identifier for the user
+        :param identity: assertions about the user from the IdP
+        :param auth_time: time of authentication reported from the IdP
+        :param idp_entity_id: id of the IdP
+        :param idp_metadata_func: callable to fetch idp metadata
+        :param transaction_session: transaction data
+        :return:
+        """
+        attributes = [N_("Affiliation"), N_("Identifier"), N_("Authentication time")]
+        values = [identity[AFFILIATION_ATTRIBUTE],
+                  self._generate_subject_id(transaction_session["client_id"], user_id, idp_entity_id),
+                  auth_time]
+        l = zip(attributes, values)
+
+        extra_claims = self._get_extra_claims(idp_metadata_func, identity, idp_entity_id,
+                                              transaction_session.get("claims", []), transaction_session["client_id"])
+        l.extend(extra_claims)
+
+        return dict(l)
+
+    def _get_extra_claims(self, idp_metadata_func, identity, idp_entity_id, requested_claims, client_id):
+        """Create the extra claims requested by the RP.
+
+        Extra claims will only be returned if the RP is allowed to request them and we got them from the IdP.
+
+        :param idp_metadata_func: callable to fetch idp metadata
+        :param identity: assertions from the IdP about the user
+        :param idp_entity_id: entity id of the IdP
+        :param requested_claims: the requested claims from the RP
+        :param client_id: RP client id
+        :return: a list of tuples with any extra claims to return to the RP with the id token.
+        """
+
+        # Verify the client is allowed to request these claims
+        allowed = self.OP.cdb[client_id].get("allowed_claims", [])
+        for value in requested_claims:
+            if value not in allowed:
+                log_internal(logger, "Claim '{}' not in '{}' for client.".format(value, allowed), None,
+                             client_id=client_id)
+
+        claims = []
+        if DOMAIN in requested_claims and DOMAIN in allowed:
+            if "schacHomeOrganization" in identity:
+                claims.append((N_("Domain"), identity["schacHomeOrganization"][0]))
+
+        if COUNTRY in requested_claims and COUNTRY in allowed:
+            country = self._get_idp_country(idp_metadata_func, idp_entity_id)
+            if country is not None:
+                claims.append((N_("Country"), country))
+
+        return claims
+
+    def _generate_subject_id(self, client_id, user_id, idp_entity_id):
+        """Construct the subject identifier for the ID Token.
+
+        :param client_id: id of the client (RP)
+        :param user_id: id of the end user
+        :param idp_entity_id: id of the IdP
+        """
+        return hashlib.sha512(client_id + user_id + idp_entity_id).hexdigest()
+
+    def _get_idp_country(self, metadata, entity_id):
+        """Get the country of the IdP.
+
+        :param metadata: function fetching the IdP metadata
+        :param entity_id: entity id of the IdP
+        """
+        idp_info = metadata[entity_id]
+        return idp_info.get("country", None)

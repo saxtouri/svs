@@ -1,4 +1,3 @@
-import hashlib
 import json
 import logging.config
 import os
@@ -17,9 +16,8 @@ from svs.oidc import InAcademiaOpenIDConnectFrontend
 from svs.saml import InAcademiaSAMLBackend
 from svs.user_interaction import ConsentPage, EndUserErrorResponse
 from svs.i18n_tool import ugettext as _
-from svs.filter import COUNTRY, DOMAIN, AFFILIATION_ATTRIBUTE
-from svs.log_utils import log_transaction_start, log_internal
-from svs.utils import deconstruct_state, construct_state, N_
+from svs.log_utils import log_transaction_start
+from svs.utils import deconstruct_state, construct_state
 
 
 logger = logging.getLogger(__name__)
@@ -304,83 +302,11 @@ class InAcademiaMediator(object):
                                                                   transaction_session)
 
         # if we have passed all checks, ask the user for consent before finalizing
-        released_claims = self._get_claims_to_release(user_id, identity, auth_time, idp_entity_id,
-                                                      transaction_session)
+        released_claims = self.op.get_claims_to_release(user_id, identity, auth_time, idp_entity_id,
+                                                        self.sp.metadata, transaction_session)
 
         client_name = self._get_client_name(transaction_session["client_id"])
         return ConsentPage.render(client_name, idp_entity_id, released_claims, RelayState)
-
-    def _generate_subject_id(self, client_id, user_id, idp_entity_id):
-        """Construct the subject identifier for the ID Token.
-
-        :param client_id: id of the client (RP)
-        :param user_id: id of the end user
-        :param idp_entity_id: id of the IdP
-        """
-        return hashlib.sha512(client_id + user_id + idp_entity_id).hexdigest()
-
-    def _get_extra_claims(self, identity, idp_entity_id, requested_claims, client_id):
-        """Create the extra claims requested by the RP.
-
-        Extra claims will only be returned if the RP is allowed to request them and we got them from the IdP.
-
-        :param identity: assertions from the IdP about the user
-        :param idp_entity_id: entity id of the IdP
-        :param scope: requested scope from the RP
-        :param client_id: RP client id
-        :return: a list of tuples with any extra claims to return to the RP with the id token.
-        """
-
-        # Verify the client is allowed to request these claims
-        allowed = self.op.OP.cdb[client_id].get("allowed_claims", [])
-        for value in requested_claims:
-            if value not in allowed:
-                log_internal(logger, "Claim '{}' not in '{}' for client.".format(value, allowed), None,
-                             client_id=client_id)
-
-        claims = []
-        if DOMAIN in requested_claims and DOMAIN in allowed:
-            if "schacHomeOrganization" in identity:
-                claims.append((N_("Domain"), identity["schacHomeOrganization"][0]))
-
-        if COUNTRY in requested_claims and COUNTRY in allowed:
-            country = self._get_idp_country(self.sp.metadata, idp_entity_id)
-            if country is not None:
-                claims.append((N_("Country"), country))
-
-        return claims
-
-    def _get_idp_country(self, metadata, entity_id):
-        """Get the country of the IdP.
-
-        :param metadata: function fetching the IdP metadata
-        :param entity_id: entity id of the IdP
-        """
-        idp_info = metadata[entity_id]
-        return idp_info.get("country", None)  # TODO add country information to SAML entity metadata
-
-    def _get_claims_to_release(self, user_id, identity, auth_time, idp_entity_id, transaction_session):
-        """
-        Compile a dictionary of a all claims we will release to the client.
-
-        :param user_id: identifier for the user
-        :param identity: assertions about the user from the IdP
-        :param auth_time: time of authentication reported from the IdP
-        :param idp_entity_id: id of the IdP
-        :param transaction_session: transaction data
-        :return:
-        """
-        attributes = [N_("Affiliation"), N_("Identifier"), N_("Authentication time")]
-        values = [identity[AFFILIATION_ATTRIBUTE],
-                  self._generate_subject_id(transaction_session["client_id"], user_id, idp_entity_id),
-                  auth_time]
-        l = zip(attributes, values)
-
-        extra_claims = self._get_extra_claims(identity, idp_entity_id, transaction_session.get("claims", []),
-                                              transaction_session["client_id"])
-        l.extend(extra_claims)
-
-        return dict(l)
 
     def _set_language(self, lang):
         """Set the language.

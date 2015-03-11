@@ -31,9 +31,9 @@ class MetadataMock(object):
         try:
             return self.data[item]
         except KeyError:
-            raise NoClientInfoReceivedError
+            raise NoClientInfoReceivedError("test")
 
-
+@patch("cherrypy.response")
 class TestInAcademiaOpenIDConnectFrontend(object):
     BASE_URL = "http://localhost"
     METADATA = MetadataMock(full_test_path("test_data/clients.json"))
@@ -44,7 +44,7 @@ class TestInAcademiaOpenIDConnectFrontend(object):
         "response_type": "id_token",
     }
 
-    def test_verify_scope(self):
+    def test_verify_scope(self, mock_cherrypy_resp):
         op = TestInAcademiaOpenIDConnectFrontend.OP
 
         scope = ["openid", "student"]
@@ -65,7 +65,7 @@ class TestInAcademiaOpenIDConnectFrontend(object):
         assert op._verify_scope(scope, "client1")
         assert not op._verify_scope(scope, "client2")
 
-    def test_authn_request(self):
+    def test_authn_request(self, mock_cherrypy_resp):
         client_id = "client1"
         args = {
             "client_id": client_id,
@@ -75,7 +75,7 @@ class TestInAcademiaOpenIDConnectFrontend(object):
 
         assert TestInAcademiaOpenIDConnectFrontend.OP.verify_authn_request(AuthorizationRequest(**args).to_urlencoded())
 
-    def test_response_type_code_with_missing_nonce(self):
+    def test_response_type_code_with_missing_nonce(self, mock_cherrypy_resp):
         client_id = "client1"
         args = {
             "client_id": client_id,
@@ -86,10 +86,42 @@ class TestInAcademiaOpenIDConnectFrontend(object):
         args["response_type"] = "code"
 
         with pytest.raises(cherrypy.HTTPRedirect) as exc_info:
-            assert TestInAcademiaOpenIDConnectFrontend.OP.verify_authn_request(AuthorizationRequest(**args).to_urlencoded())
+            assert TestInAcademiaOpenIDConnectFrontend.OP.verify_authn_request(
+                AuthorizationRequest(**args).to_urlencoded())
 
+    def test_extra_claims(self, mock_cherrypy_resp):
+        op = TestInAcademiaOpenIDConnectFrontend.OP
+        test_country = "Atlantis"
+        test_organization = "SuperCorp"
+        test_idp = "test_idp"
+        kwargs = {
+            "user_id": "foo",
+            "identity": {"eduPersonAffiliation": "student", "schacHomeOrganization": [test_organization]},
+            "auth_time": "1970-01-01T00:00:00Z",
+            "idp_entity_id": test_idp,
+            "idp_metadata_func": {test_idp: {"country": test_country}}
+        }
 
-    @patch("cherrypy.response")
+        # Request country
+        session = {"client_id": "client2", "claims": {"country": None}}
+        claims = op.get_claims_to_release(transaction_session=session, **kwargs)
+        assert claims["Country"] == test_country
+
+        # Request country, but not allowed
+        session = {"client_id": "client1", "claims": {"country": None}}
+        claims = op.get_claims_to_release(transaction_session=session, **kwargs)
+        assert "Country" not in claims
+
+        # Request domain
+        session = {"client_id": "client1", "claims": {"domain": None}}
+        claims = op.get_claims_to_release(transaction_session=session, **kwargs)
+        assert claims["Domain"] == test_organization
+
+        # Request domain, but not allowed
+        session = {"client_id": "client2", "claims": {"domain": None}}
+        claims = op.get_claims_to_release(transaction_session=session, **kwargs)
+        assert "Domain" not in claims
+
     def test_unknown_client_id(self, mock_cherrypy_resp):
         args = {
             "client_id": "unknown",
@@ -101,7 +133,7 @@ class TestInAcademiaOpenIDConnectFrontend(object):
             mock_cherrypy_resp.i18n.trans.ugettext = mock.MagicMock(return_value="")
             assert TestInAcademiaOpenIDConnectFrontend.OP.verify_authn_request(urllib.urlencode(args))
 
-    @patch("cherrypy.response")
+
     def test_missing_request_args(self, mock_cherrypy_resp):
         args = {
             "client_id": "unknown",
@@ -113,7 +145,7 @@ class TestInAcademiaOpenIDConnectFrontend(object):
             query = urllib.urlencode(args)
             assert TestInAcademiaOpenIDConnectFrontend.OP.verify_authn_request(query)
 
-    @patch("cherrypy.response")
+
     def test_missing_redirect_uri(self, mock_cherrypy_resp):
         args = {
             "client_id": "client1",
@@ -124,7 +156,7 @@ class TestInAcademiaOpenIDConnectFrontend(object):
             mock_cherrypy_resp.i18n.trans.ugettext = mock.MagicMock(return_value="")
             assert TestInAcademiaOpenIDConnectFrontend.OP.verify_authn_request(urllib.urlencode(args))
 
-    @patch("cherrypy.response")
+
     def test_incorrect_redirect_uri(self, mock_cherrypy_resp):
         args = {
             "client_id": "client1",
@@ -136,8 +168,8 @@ class TestInAcademiaOpenIDConnectFrontend(object):
             mock_cherrypy_resp.i18n.trans.ugettext = mock.MagicMock(return_value="")
             assert TestInAcademiaOpenIDConnectFrontend.OP.verify_authn_request(urllib.urlencode(args))
 
-    @patch("cherrypy.response")
-    def test_incorrect_redirect_uri(self, mock_cherrypy_resp):
+
+    def test_incorrect_response_type(self, mock_cherrypy_resp):
         client_id = "client1"
         args = {
             "client_id": client_id,
