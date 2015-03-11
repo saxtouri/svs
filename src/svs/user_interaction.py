@@ -45,8 +45,9 @@ class ConsentPage(object):
 
     @classmethod
     def render(cls, client_name, idp_entity_id, released_claims, relay_state, form_action="/consent"):
-        question = N_("<strong>'{client_name}'</strong> requires the information below to be transferred:").format(
-            client_name=client_name)
+        client_name_display_string = "<strong>'{}'</strong>".format(client_name)
+        question = N_("{client_name} requires the information below to be transferred:").format(
+            client_name=client_name_display_string)
 
         state = {
             "idp_entity_id": idp_entity_id,
