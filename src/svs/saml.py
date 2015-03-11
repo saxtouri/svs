@@ -2,6 +2,7 @@ import logging
 import urlparse
 
 import cherrypy
+from oic.oauth2 import rndstr
 from oic.utils.http_util import SeeOther
 from oic.utils.http_util import Response
 from saml2.client_base import Base
@@ -319,17 +320,19 @@ class InAcademiaSAMLBackend(object):
                                           cherrypy.request, logger, "The user does not have the correct affiliation.",
                                           idp_entity_id)
 
-        _user_id = self.get_name_id(name_id, identity, scope)
-        log_internal(logger, "NameID from the IdP: '{}'.".format(_user_id), cherrypy.request, transaction_id,
-                     transaction_session["client_id"])
-        if _user_id is None:
-            negative_transaction_response(transaction_id, transaction_session, cherrypy.request, logger,
-                                          "The users identity could not be provided.",
-                                          idp_entity_id)
+        if PERSISTENT_NAMEID in scope:
+            _user_id = self.get_name_id(name_id, identity)
+            if _user_id is None:
+                negative_transaction_response(transaction_id, transaction_session, cherrypy.request, logger,
+                                              "The users identity could not be provided.",
+                                              idp_entity_id)
+        else:
+            # for transient identifiers, use random string to keep the identifier unique per transaction
+            _user_id = rndstr(256)
 
         return _user_id, identity, auth_time, idp_entity_id
 
-    def get_name_id(self, name_id_from_idp, identity, scope):
+    def get_name_id(self, name_id_from_idp, identity):
         """Get the name id.
 
         If the RP requested a persistent name id, try the following SAML attributes in order:
@@ -341,16 +344,12 @@ class InAcademiaSAMLBackend(object):
         :param scope: requested scope from the RP
         :return: the name id from the IdP or None if an incorrect or no name id at all was returned from the IdP.
         """
-        if PERSISTENT_NAMEID in scope:
-            # Use one of NameID (if persistent) or EPTID or EPPN in that order
-            if name_id_from_idp.format == NAMEID_FORMAT_PERSISTENT:
-                return name_id_from_idp.text
-            else:
-                for key in ['eduPersonTargetedID', 'eduPersonPrincipalName']:
-                    if key in identity:
-                        return identity[key][0]
+        # Use one of NameID (if persistent) or EPTID or EPPN in that order
+        if name_id_from_idp.format == NAMEID_FORMAT_PERSISTENT:
+            return name_id_from_idp.text
         else:
-            if name_id_from_idp.format == NAMEID_FORMAT_TRANSIENT:
-                return name_id_from_idp.text
+            for key in ['eduPersonTargetedID', 'eduPersonPrincipalName']:
+                if key in identity:
+                    return identity[key][0]
 
         return None
