@@ -66,7 +66,7 @@ class TestSamlSp(unittest.TestCase):
         cls.SP_CONF = SPConfig().load(CONFIG)
 
     def setUp(self):
-        self.SP = SamlSp(None, TestSamlSp.SP_CONF, TestSamlSp.DISCO_SRV_URL, sign_func=None)
+        self.SP = SamlSp(TestSamlSp.SP_CONF, TestSamlSp.DISCO_SRV_URL, sign_func=None)
 
     def test_authn_request(self):
         # Check the correct HTTP-POST binding is used
