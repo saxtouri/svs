@@ -239,7 +239,7 @@ class InAcademiaMediator(object):
     def consent_allow(self, state=None, released_claims=None):
         """Where the approved consent arrives.
 
-        This function is mapped explicitly using PathDiscpatcher.
+        This function is mapped explicitly using PathDispatcher.
         """
         if state is None or released_claims is None:
             raise cherrypy.HTTPError(404, _("Page not found."))
@@ -252,7 +252,7 @@ class InAcademiaMediator(object):
     def consent_deny(self, state=None):
         """Where the denied consent arrives.
 
-        This function is mapped explicitly using PathDiscpatcher.
+        This function is mapped explicitly using PathDispatcher.
         """
         if state is None:
             raise cherrypy.HTTPError(404, _("Page not found."))
