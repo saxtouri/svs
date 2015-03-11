@@ -304,6 +304,15 @@ A transaction will only be started if:
     #) the `Redirect URI`, specified in the authentication request, is among the URL's given when registering with the
        InAcademia service
     #) the scope specified in the authentication request is valid
+    #) the response type is correct (only ``id_token`` is supported)
+
+If 1. or 2. is not satisfied, no response will be sent to the RP, instead an error will be displayed to the end user.
+If 3. or 4. is not satisfied, an error response will be sent (see :ref:`possible_errors` for error codes).
+The error response will be encoded in the fragment part of the redirect URI::
+
+    <redirect_uri>#error=<error_code>&error_description=<error_description>
+
+where the ``error_description`` is optional and therefore might be missing.
 
 The transaction will fail if:
     #) the end-user wants to validate its affiliation with an for the InAcademia service unknown institution or an
@@ -312,11 +321,11 @@ The transaction will fail if:
     #) the institution did not provide enough information to the InAcademia service to validate the affiliation
     #) the end-user did not give consent to release the necessary information
 
-If the transaction fail an error code and possible an error description will be returned in the fragment part of the
-redirect URI::
+If the transaction fails an error code and possibly an error description will be returned in the fragment part of the
+redirect URI (in the same way as described above).
 
-    <redirect_uri>#error=<error_code>&error_description=<error_description>
 
+.. _possible_errors:
 
 Possible errors
 ^^^^^^^^^^^^^^^
