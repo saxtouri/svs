@@ -28,7 +28,7 @@
             <!-- Language selection -->
             <div class="col-md-1">
                 <form action="${form_action}" method="POST" >
-                    <select name="lang" onchange="this.form.submit()" class="dropdown-menu-right">
+                    <select name="lang" id="lang" onchange="this.form.submit()" class="dropdown-menu-right">
                         <option value="en">EN</option>
                         <option value="sv">SV</option>
                         <option value="nl">NL</option>
@@ -74,9 +74,9 @@
 <script type="application/javascript">
     "use strict";
 
+    // Mark the selected language in the dropdown
     var lang = "${language}"
     var lang_option = document.querySelector("option[value=" + lang + "]");
-    console.log(lang_option)
     lang_option.selected = true;
 </script>
 
