@@ -130,43 +130,30 @@ class TestGetNameID(unittest.TestCase):
 
     SP = InAcademiaSAMLBackend("http://localhost", None, "")
 
-    def test_transient_NameID(self):
-        # Transient id when specified in scope
-        id = TestGetNameID.SP.get_name_id(TestGetNameID.TRANSIENT_NAME_ID, {}, ["openid", "transient"])
-        assert id == TestGetNameID.TRANSIENT_ID
-
-        # Transient id as default (without being specified in scope)
-        id = TestGetNameID.SP.get_name_id(TestGetNameID.TRANSIENT_NAME_ID, {}, ["openid"])
-        assert id == TestGetNameID.TRANSIENT_ID
-
-        # No name id if IdP only provided persistent id
-        id = TestGetNameID.SP.get_name_id(TestGetNameID.PERSISTENT_ID, {}, ["openid"])
-        assert id is None
-
     def test_persistent_NameID(self):
         scope = ["openid", "persistent"]
         identity = {}
 
         # Persistent id when specified in scope
-        id = TestGetNameID.SP.get_name_id(TestGetNameID.PERSISTENT_NAME_ID, identity, scope)
+        id = TestGetNameID.SP.get_name_id(TestGetNameID.PERSISTENT_NAME_ID, identity)
         assert id == TestGetNameID.PERSISTENT_ID
 
         # No name id if IdP can not supply persistent name id/EPTID/EPPN
-        id = TestGetNameID.SP.get_name_id(TestGetNameID.TRANSIENT_NAME_ID, identity, scope)
+        id = TestGetNameID.SP.get_name_id(TestGetNameID.TRANSIENT_NAME_ID, identity)
         assert id is None
 
         # Use EPTID instead of persistent id
         with patch.dict(identity, {"eduPersonTargetedID": [TestGetNameID.EPTID]}):
-            id = TestGetNameID.SP.get_name_id(TestGetNameID.TRANSIENT_NAME_ID, identity, scope)
+            id = TestGetNameID.SP.get_name_id(TestGetNameID.TRANSIENT_NAME_ID, identity)
             assert id == TestGetNameID.EPTID
 
         # Use EPPN instead of persistent id
         with patch.dict(identity, {"eduPersonPrincipalName": [TestGetNameID.EPPN]}):
-            id = TestGetNameID.SP.get_name_id(TestGetNameID.TRANSIENT_NAME_ID, identity, scope)
+            id = TestGetNameID.SP.get_name_id(TestGetNameID.TRANSIENT_NAME_ID, identity)
             assert id == TestGetNameID.EPPN
 
         # Prioritize EPTID (over EPPN)
         with patch.dict(identity,
                         {"eduPersonTargetedID": [TestGetNameID.EPTID], "eduPersonPrincipalName": [TestGetNameID.EPPN]}):
-            id = TestGetNameID.SP.get_name_id(TestGetNameID.TRANSIENT_NAME_ID, identity, scope)
+            id = TestGetNameID.SP.get_name_id(TestGetNameID.TRANSIENT_NAME_ID, identity)
             assert id == TestGetNameID.EPTID
