@@ -249,7 +249,7 @@ class InAcademiaMediator(object):
         transaction_session = self._decode_state(state["state"])
         return self.op.id_token(released_claims, state["idp_entity_id"], state["state"], transaction_session)
 
-    def consent_deny(self, state=None):
+    def consent_deny(self, state=None, released_claims=None):
         """Where the denied consent arrives.
 
         This function is mapped explicitly using PathDispatcher.
