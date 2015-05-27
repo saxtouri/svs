@@ -1,6 +1,7 @@
 import json
 import os
 import urllib
+import urlparse
 import cherrypy
 
 import mock
@@ -65,6 +66,8 @@ class TestInAcademiaOpenIDConnectFrontend(object):
         assert op._verify_scope(scope, "client1")
         assert not op._verify_scope(scope, "client2")
 
+        scope = ["openid"]
+
     def test_authn_request(self, mock_cherrypy_resp):
         client_id = "client1"
         args = {
@@ -73,7 +76,8 @@ class TestInAcademiaOpenIDConnectFrontend(object):
         }
         args.update(TestInAcademiaOpenIDConnectFrontend.REQUEST_ARGS)
 
-        assert TestInAcademiaOpenIDConnectFrontend.OP.verify_authn_request(AuthorizationRequest(**args).to_urlencoded())
+        resp = TestInAcademiaOpenIDConnectFrontend.OP.verify_authn_request(AuthorizationRequest(**args).to_urlencoded())
+        assert resp["client_id"] == client_id
 
     def test_response_type_code_with_missing_nonce(self, mock_cherrypy_resp):
         client_id = "client1"
@@ -181,3 +185,16 @@ class TestInAcademiaOpenIDConnectFrontend(object):
         with pytest.raises(cherrypy.HTTPRedirect):
             mock_cherrypy_resp.i18n.trans.ugettext = mock.MagicMock(return_value="")
             assert TestInAcademiaOpenIDConnectFrontend.OP.verify_authn_request(urllib.urlencode(args))
+
+    def test_error_message_invalid_scope(self, mock_cherrypy_resp):
+        client_id = "client1"
+        args = {
+            "client_id": client_id,
+            "redirect_uri": TestInAcademiaOpenIDConnectFrontend.METADATA[client_id]["redirect_uris"][0]
+        }
+        args.update(TestInAcademiaOpenIDConnectFrontend.REQUEST_ARGS)
+        args["scope"] = "openid invalid_foobar"
+        with pytest.raises(cherrypy.HTTPRedirect) as redirect:
+            TestInAcademiaOpenIDConnectFrontend.OP.verify_authn_request(AuthorizationRequest(**args).to_urlencoded())
+
+        assert urllib.unquote_plus(urlparse.parse_qs(urlparse.urlparse(redirect.value.urls[0]).fragment)["error_description"][0]) == "The specified scope 'openid invalid_foobar' is not valid."

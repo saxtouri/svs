@@ -204,7 +204,7 @@ class InAcademiaOpenIDConnectFrontend(object):
             abort_with_client_error("-", transaction_session, cherrypy.request, logger,
                                     "Invalid scope '{}'".format(areq["scope"]),
                                     error="invalid_scope",
-                                    error_description="The specified scope '{}' is not valid.".format(areq["scope"]))
+                                    error_description="The specified scope '{}' is not valid.".format(" ".join(areq["scope"])))
 
         transaction_session.update({
             "nonce": areq["nonce"],
