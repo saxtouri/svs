@@ -19,5 +19,15 @@
     "allowed_claims": [
       "country"
     ]
+  },
+  "client3": {
+    "redirect_uris": ["http://rp.example.com"],
+    "display_name": "Test RP Client3",
+    "allowed_scope_values": [
+      "employee"
+    ],
+    "allowed_claims": [
+      "country"
+    ]
   }
 }

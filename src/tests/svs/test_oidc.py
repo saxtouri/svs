@@ -204,3 +204,7 @@ class TestInAcademiaOpenIDConnectFrontend(object):
         error_desc = urllib.unquote_plus(response["error_description"][0])
         assert scope in error_desc
         assert response["state"][0] == state
+
+    def test_employee_scope(self, mock_cherrypy_resp):
+        scope = ["openid", "employee"]
+        assert TestInAcademiaOpenIDConnectFrontend.OP._verify_scope(scope, "client3")
