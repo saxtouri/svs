@@ -25,7 +25,11 @@ def abort_with_client_error(transaction_id, transaction_session, environ, logger
     :return: raises cherrypy.HTTPRedirect to send the error to the RP.
     """
     _log_fail(logger, log_msg, transaction_id, transaction_session["client_id"], environ, **kwargs)
-    client_error_message(transaction_session["redirect_uri"], error, error_description)
+    try:
+        state = transaction_session["state"]
+    except KeyError:
+        state = ""
+    client_error_message(transaction_session["redirect_uri"], error, error_description, state)
 
 
 def _log_fail(logger, log_msg, transaction_id, client_id, environ, **kwargs):
@@ -35,13 +39,13 @@ def _log_fail(logger, log_msg, transaction_id, client_id, environ, **kwargs):
     return t, uid
 
 
-def client_error_message(redirect_uri, error="access_denied", error_description=""):
+def client_error_message(redirect_uri, error="access_denied", error_description="", state=""):
     """Construct an error response and send in fragment part of redirect_uri.
     :param redirect_uri: redirect_uri of the client
     :param error: OpenID Connect error code
     :param error_description: human readable description of the error
     """
-    error_resp = AuthorizationErrorResponse(error=error, error_description=error_description)
+    error_resp = AuthorizationErrorResponse(error=error, error_description=error_description, state=state)
     location = error_resp.request(redirect_uri, True)
     raise cherrypy.HTTPRedirect(location)
 
@@ -52,4 +56,8 @@ def negative_transaction_response(transaction_id, transaction_session, environ, 
     _elapsed_transaction_time = get_timestamp() - transaction_session["start_time"]
     log_negative_transaction_complete(logger, environ, transaction_id, transaction_session["client_id"], idp_entity_id,
                                       now(), _elapsed_transaction_time, message)
-    client_error_message(transaction_session["redirect_uri"], message)
+    try:
+        state = transaction_session["state"]
+    except KeyError:
+        state = ""
+    client_error_message(transaction_session["redirect_uri"], message, state)
