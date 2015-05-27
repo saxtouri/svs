@@ -220,7 +220,7 @@ class InAcademiaOpenIDConnectFrontend(object):
 
         return transaction_session
 
-    def get_claims_to_release(self, user_id, identity, auth_time, idp_entity_id, idp_metadata_func,
+    def get_claims_to_release(self, user_id, affiliation, identity, auth_time, idp_entity_id, idp_metadata_func,
                               transaction_session):
         """
         Compile a dictionary of a all claims we will release to the client.
@@ -234,7 +234,7 @@ class InAcademiaOpenIDConnectFrontend(object):
         :return:
         """
         attributes = [N_("Affiliation"), N_("Identifier"), N_("Authentication time")]
-        values = [identity[AFFILIATION_ATTRIBUTE],
+        values = [affiliation,
                   self._generate_subject_id(transaction_session["client_id"], user_id, idp_entity_id),
                   auth_time]
         l = zip(attributes, values)

@@ -313,9 +313,9 @@ class InAcademiaSAMLBackend(object):
             abort_with_client_error(transaction_id, transaction_session, cherrypy.request, logger,
                                     "Could not parse Authentication Response from IdP.", exc_info=True)
 
-        has_correct_affiliation = get_affiliation_function(scope)
-
-        if not has_correct_affiliation(identity):
+        get_affiliation = get_affiliation_function(scope)
+        affiliation = get_affiliation(identity)
+        if not affiliation:
             negative_transaction_response(transaction_id, transaction_session,
                                           cherrypy.request, logger, "The user does not have the correct affiliation.",
                                           idp_entity_id)
@@ -330,7 +330,7 @@ class InAcademiaSAMLBackend(object):
             # for transient identifiers, use random string to keep the identifier unique per transaction
             _user_id = rndstr(256)
 
-        return _user_id, identity, auth_time, idp_entity_id
+        return _user_id, affiliation, identity, auth_time, idp_entity_id
 
     def get_name_id(self, name_id_from_idp, identity):
         """Get the name id.

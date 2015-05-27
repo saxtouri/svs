@@ -298,11 +298,11 @@ class InAcademiaMediator(object):
         :return: HTML of the OP consent page.
         """
         transaction_session = self._decode_state(RelayState)
-        user_id, identity, auth_time, idp_entity_id = self.sp.acs(SAMLResponse, binding, RelayState,
+        user_id, affiliation, identity, auth_time, idp_entity_id = self.sp.acs(SAMLResponse, binding, RelayState,
                                                                   transaction_session)
 
         # if we have passed all checks, ask the user for consent before finalizing
-        released_claims = self.op.get_claims_to_release(user_id, identity, auth_time, idp_entity_id,
+        released_claims = self.op.get_claims_to_release(user_id, affiliation, identity, auth_time, idp_entity_id,
                                                         self.sp.metadata, transaction_session)
 
         client_name = self._get_client_name(transaction_session["client_id"])

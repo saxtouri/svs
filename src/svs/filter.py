@@ -24,11 +24,10 @@ def get_affiliation_function(scope):
 
 
 def _is_student(identity):
-    return 'student' in _get_affiliation_attribute(identity)
-
+    return _contains_any(['student'], _get_affiliation_attribute(identity))
 
 def _is_member(identity):
-    return 'member' in _get_affiliation_attribute(identity)
+    return _contains_any(['member'], _get_affiliation_attribute(identity))
 
 
 def _is_employee(identity):
@@ -41,12 +40,14 @@ def _is_affiliated(identity):
 
 
 def _is_alumni(identity):
-    return 'alum' in _get_affiliation_attribute(identity)
-
+    return _contains_any(['alum'], _get_affiliation_attribute(identity))
 
 def _contains_any(accepted_values, bag):
-    return any(v in bag for v in accepted_values)
+    for v in accepted_values:
+        if v in bag:
+            return v
 
+    return None
 
 def _get_affiliation_attribute(identity):
     """
