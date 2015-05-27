@@ -31,13 +31,13 @@ def _is_member(identity):
     return 'member' in _get_affiliation_attribute(identity)
 
 
-def _is_faculty_or_staff(identity):
+def _is_employee(identity):
     accepted_values = ['faculty', 'staff']
     return _contains_any(accepted_values, _get_affiliation_attribute(identity))
 
 
 def _is_affiliated(identity):
-    return _is_student(identity) or _is_faculty_or_staff(identity) or _is_member(identity)
+    return _is_student(identity) or _is_employee(identity) or _is_member(identity)
 
 
 def _is_alumni(identity):
@@ -61,7 +61,7 @@ def _get_affiliation_attribute(identity):
 AFFILIATIONS = {
     'affiliated': _is_affiliated,
     'student': _is_student,
-    'faculty+staff': _is_faculty_or_staff,
+    'employee': _is_employee,
     'alum': _is_alumni
 }
 
