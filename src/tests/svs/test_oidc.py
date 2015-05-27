@@ -200,5 +200,7 @@ class TestInAcademiaOpenIDConnectFrontend(object):
         with pytest.raises(cherrypy.HTTPRedirect) as redirect:
             TestInAcademiaOpenIDConnectFrontend.OP.verify_authn_request(AuthorizationRequest(**args).to_urlencoded())
 
-        assert urllib.unquote_plus(urlparse.parse_qs(urlparse.urlparse(redirect.value.urls[0]).fragment)["error_description"][0]) == "The specified scope '{}' is not valid.".format(scope)
-        assert urlparse.parse_qs(urlparse.urlparse(redirect.value.urls[0]).fragment)["state"][0] == state
+        response = urlparse.parse_qs(urlparse.urlparse(redirect.value.urls[0]).fragment)
+        error_desc = urllib.unquote_plus(response["error_description"][0])
+        assert scope in error_desc
+        assert response["state"][0] == state
