@@ -188,13 +188,17 @@ class TestInAcademiaOpenIDConnectFrontend(object):
 
     def test_error_message_invalid_scope(self, mock_cherrypy_resp):
         client_id = "client1"
+        scope = "openid invalid_foobar"
+        state = "test_state"
         args = {
             "client_id": client_id,
-            "redirect_uri": TestInAcademiaOpenIDConnectFrontend.METADATA[client_id]["redirect_uris"][0]
+            "redirect_uri": TestInAcademiaOpenIDConnectFrontend.METADATA[client_id]["redirect_uris"][0],
+            "state": state
         }
         args.update(TestInAcademiaOpenIDConnectFrontend.REQUEST_ARGS)
-        args["scope"] = "openid invalid_foobar"
+        args["scope"] = scope
         with pytest.raises(cherrypy.HTTPRedirect) as redirect:
             TestInAcademiaOpenIDConnectFrontend.OP.verify_authn_request(AuthorizationRequest(**args).to_urlencoded())
 
-        assert urllib.unquote_plus(urlparse.parse_qs(urlparse.urlparse(redirect.value.urls[0]).fragment)["error_description"][0]) == "The specified scope 'openid invalid_foobar' is not valid."
+        assert urllib.unquote_plus(urlparse.parse_qs(urlparse.urlparse(redirect.value.urls[0]).fragment)["error_description"][0]) == "The specified scope '{}' is not valid.".format(scope)
+        assert urlparse.parse_qs(urlparse.urlparse(redirect.value.urls[0]).fragment)["state"][0] == state

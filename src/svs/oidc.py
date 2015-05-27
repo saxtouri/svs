@@ -189,7 +189,15 @@ class InAcademiaOpenIDConnectFrontend(object):
         transaction_session = {
             "client_id": client_id,
             "redirect_uri": areq["redirect_uri"],
+            "nonce": areq["nonce"],
+            "scope": areq["scope"],
         }
+
+        if "state" in areq:
+            transaction_session["state"] = areq["state"]
+
+        if "claims" in areq:
+            transaction_session["claims"] = areq["claims"]["id_token"].to_dict()
 
         # Verify that the response_type if present is id_token
         try:
@@ -207,16 +215,8 @@ class InAcademiaOpenIDConnectFrontend(object):
                                     error_description="The specified scope '{}' is not valid.".format(" ".join(areq["scope"])))
 
         transaction_session.update({
-            "nonce": areq["nonce"],
-            "scope": areq["scope"],
             "start_time": get_timestamp()
         })
-
-        if "state" in areq:
-            transaction_session["state"] = areq["state"]
-
-        if "claims" in areq:
-            transaction_session["claims"] = areq["claims"]["id_token"].to_dict()
 
         return transaction_session
 
