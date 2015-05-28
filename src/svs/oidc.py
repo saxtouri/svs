@@ -76,9 +76,10 @@ class InAcademiaOpenIDConnectFrontend(object):
                                               extra_claims=extra_claims)
 
         _elapsed_transaction_time = get_timestamp() - transaction_session["start_time"]
-        log_transaction_complete(logger, cherrypy.request, transaction_id, transaction_session["client_id"],
-                                 idp_entity_id,
-                                 _time, extra_claims, _jwt, _elapsed_transaction_time)
+        log_transaction_complete(logger, cherrypy.request, transaction_id,
+                                 transaction_session["client_id"],
+                                 idp_entity_id, _time, _elapsed_transaction_time,
+                                 extra_claims, _jwt)
 
         try:
             _state = transaction_session["state"]
