@@ -196,6 +196,10 @@ The table below contains all values, grouped by category, allowed in the scope s
       - Is the end-user a student at the institution?
 
     * -
+      - employee
+      - Is the end-user an employee at the institution?
+
+    * -
       - faculty+staff
       - Is the end-user a teacher/researcher (faculty) or a worker (other than teacher/researcher, staff) at the institution?
 
