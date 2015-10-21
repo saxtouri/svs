@@ -61,7 +61,7 @@ The authentication request is sent by redirecting the end-user to::
 
 
 All parameters are described in :ref:`authentication_request`. Documentation of the authentication request can be found
-in the section `Authentication using the Implicit Flow`_.
+in `Authentication using the Implicit Flow`_.
 
 *Note: Because of the redirect, the request is made by a client (typically a web-browser), and the response is
 delivered in the fragment identifier of the given redirect URI (see below).*
@@ -74,8 +74,9 @@ If the transaction succeeds, an `ID Token` (encoded as a JWT) will be returned i
 redirect URI. This can then be parsed using some scripting language in the browser (e.g. Javascript) running in the
 browser at the redirect URI.
 
-Documentation of the response to a successful authentication can be found in the section
-`Successful authentication request`_.
+Documentation and an example of the response to a successful authentication can be found in
+`Successful authentication request`_. Note that no access token is issued by the InAcademia provider,
+only an ID Token together with any specified ``state`` will be returned.
 
 
 .. _client_registration:
