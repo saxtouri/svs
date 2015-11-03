@@ -1,0 +1,13 @@
+{
+    "service": {
+        "sp": {
+            "optional_attributes": [
+                "schachomeorganization",
+                "edupersontargetedid",
+                "edupersonprincipalname"
+            ],
+            "name_id_format": ["urn:oasis:names:tc:SAML:2.0:nameid-format:persistent"]
+        }
+    },
+    "entityid": "https://inacademia.org/metadata/t01-p-test.xml"
+}
