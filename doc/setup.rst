@@ -41,8 +41,7 @@ The ``<host data dir>`` must have the following structure::
     ├── inAcademia.pub
     ├── symkey.json
 
-where ``inacademia*`` (in the root of the directory) is the signing/encryption key for the OpenID Connect OP,
-``pki/inacademia-test*`` is the signing/encryption key for the SAML SP and ``symkey.json`` is a symmetric key (in JWKS
+where ``inacademia*`` (in the root of the directory) is the signing/encryption key for the OpenID Connect OP and ``symkey.json`` is a symmetric key (in JWKS
 format) to use for encrypting the SAML RelayState.
 
 ``docker compose``/``fig`` descriptors for the core service (svs) and auxiliary client MDQ server can be found at
