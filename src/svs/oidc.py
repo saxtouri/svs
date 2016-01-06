@@ -85,9 +85,7 @@ class InAcademiaOpenIDConnectFrontend(object):
             _state = transaction_session["state"]
         except KeyError:
             _state = None
-        authzresp = AuthorizationResponse(state=_state,
-                                          scope=transaction_session["scope"],
-                                          id_token=_jwt)
+        authzresp = AuthorizationResponse(state=_state, id_token=_jwt)
 
         if "redirect_uri" in transaction_session:
             _ruri = transaction_session["redirect_uri"]
