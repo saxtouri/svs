@@ -11,6 +11,7 @@ Contents:
 .. toctree::
    :maxdepth: 1
 
+   client_examples/examples
    setup
    usage
    system/logging
