@@ -71,7 +71,7 @@ class InAcademiaOpenIDConnectFrontend(object):
         # construct the OIDC response
         transaction_session["sub"] = identifier
 
-        extra_claims = {k: released_claims[k] for k in ["country", "domain"] if k in released_claims}
+        extra_claims = {k.lower(): released_claims[k] for k in ["Country", "Domain"] if k in released_claims}
         _jwt = self.OP.id_token_as_signed_jwt(transaction_session, loa="", auth_time=_time, exp={"minutes": 30},
                                               extra_claims=extra_claims)
 
