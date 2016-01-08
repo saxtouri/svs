@@ -17,22 +17,14 @@ Python 3: pyoidc_
 Setup client instance
 ---------------------
 
-.. code:: python
+.. code-block:: python
 
     from oic.oic import Client
     from oic.oic.message import RegistrationResponse
     from oic.utils.authn.client import CLIENT_AUTHN_METHOD
 
     # create a client instance
-    client = Client(client_authn_method=CLIENT_AUTHN_METHOD)
-
-    # store client registration info
-    registration_info = {
-        "client_id": "client1",
-        "client_secret": "12345",
-        "redirect_uris": ["http://example.com/callback"]
-    }
-    client.store_registration_info(RegistrationResponse(**registration_info))
+    client = Client(client_id=..., client_authn_method=CLIENT_AUTHN_METHOD)
 
     # fetch the provider configuration information
     client.provider_config(inacademia_url)
@@ -41,7 +33,7 @@ Setup client instance
 Make authentication request
 ---------------------------
 
-.. code:: python
+.. code-block:: python
 
     from oic.oauth2 import rndstr
     from oic.oic.message import Claims, ClaimsRequest
@@ -50,7 +42,7 @@ Make authentication request
 
     # make the authentication request
     scope = "openid student" # request verification of student affiliation
-    claims_request = ClaimsRequest(id_token=Claims(domain={"essential": True})) # request the additional claim 'domain'
+    claims_request = ClaimsRequest(id_token=Claims(domain=None)) # request the additional claim 'domain'
     args = {
         "client_id": client.client_id,
         "response_type": "id_token",
@@ -67,7 +59,7 @@ Make authentication request
 Receive the authencation response
 ---------------------------------
 
-.. code:: python
+.. code-block:: python
 
     from oic.utils.http_util import Response
 
@@ -88,17 +80,17 @@ Receive the authencation response
 Process the authentication response server-side
 -----------------------------------------------
 
-.. code:: python
+.. code-block:: python
 
     from oic.oic.message import AuthorizationResponse
     from urllib.parse import unquote, parse_qsl
 
-    post_data = ... # read post data from http request
+    post_data = ... # read POST data from HTTP request
     params = dict(parse_qsl(unquote(post_data)))["response"]
     authn_resp = client.parse_response(AuthorizationResponse, params, sformat="urlencoded")
+    id_token = authn_resp["id_token"]
 
-
-
+    # ... Verify the ID Token and use its claims
 
 Java: `Nimbus OAuth 2.0 SDK`_
 =============================
