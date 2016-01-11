@@ -63,8 +63,6 @@ def main():
 
     # Force base url to end with '/'
     base_url = args.base
-    if not base_url.endswith("/"):
-        base_url += "/"
 
     setup_logging()
 

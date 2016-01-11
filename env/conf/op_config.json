@@ -1,5 +1,5 @@
 {
-    "authorization_endpoint": "{base}authorization",
+    "authorization_endpoint": "{base}/authorization",
     "claim_types_supported": ["normal"],
     "id_token_signing_alg_values_supported": ["ES256", "ES384", "ES512",
                                               "RS256", "RS384", "RS512"],

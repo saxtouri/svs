@@ -72,7 +72,7 @@ def write_metadata(sp_configs):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(dest="base", required=True, type=str, help="base url of the SP")
+    parser.add_argument("base", type=str, help="base url of the SP")
     args = parser.parse_args()
 
     make_metadata(args.base)
