@@ -196,6 +196,39 @@ Process the authentication response server-side
 Apache: `mod_auth_openidc`_
 ===========================
 
+Configuration
+-------------
+
+.. code-block:: apache
+
+    Listen <port>
+    ServerName <server name>
+
+    LoadModule auth_openidc_module /usr/lib/apache2/modules/mod_auth_openidc.so
+    LoadModule ssl_module /usr/lib/apache2/modules/mod_ssl.so
+
+    <VirtualHost _default_:*>
+        OIDCProviderMetadataURL <inacademia url>/.well-known/openid-configuration
+        OIDCClientID <client id>
+        OIDCClientSecret <client secret>
+        OIDCRedirectURI https://<hostname>:<port>/protected/authz_cb
+        OIDCResponseType id_token
+        OIDCScope "openid student" # request verification of student affiliation
+        OIDCAuthRequestParams "claims=%7B%22id_token%22%3A%20%7B%22domain%22%3A%20null%7D%7D" # request the additional claim 'domain'
+
+        OIDCCryptoPassphrase <secret>
+
+        <Location /protected>
+          AuthType openid-connect
+          Require valid-user
+        </Location>
+
+        SSLEngine on
+        SSLCertificateFile <ssl cert>
+        SSLCertificateKeyFile <ssl key>
+    </VirtualHost>
+
+
 Javascript
 ==========
 
