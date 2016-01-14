@@ -64,6 +64,6 @@ setup(name='svs',
           'compile_all_catalogs': compile_all_catalogs
       },
       setup_requires=['Babel'],
-      install_requires=['Babel', 'oic>=0.7.7'],
+      install_requires=['Babel', 'oic>=0.7.8'],
       tests_require=['pytest', 'mock'],
 )
