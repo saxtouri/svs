@@ -14,6 +14,8 @@ InAcademia service. Additional measures should be implemented to increase the se
 Python 3: pyoidc_
 =================
 
+More information can be found `here <pyoidc client_>`_.
+
 Setup client instance
 ---------------------
 
@@ -92,8 +94,11 @@ Process the authentication response server-side
 
     # ... Verify the ID Token and use its claims
 
+
 Java: `Nimbus OAuth 2.0 SDK`_
 =============================
+
+More information can be found `here <Nimbus client_>`_.
 
 Fetch provider configuration information
 ----------------------------------------
@@ -196,6 +201,8 @@ Process the authentication response server-side
 Apache: `mod_auth_openidc`_
 ===========================
 
+More information can be found `here <mod_auth_openidc config_>`_.
+
 Configuration
 -------------
 
@@ -229,10 +236,9 @@ Configuration
     </VirtualHost>
 
 
-Javascript
-==========
-
-
 .. _pyoidc: https://github.com/rohe/pyoidc
+.. _pyoidc client: https://github.com/rohe/pyoidc/blob/master/doc/howto/rp.rst
 .. _Nimbus OAuth 2.0 SDK: http://connect2id.com/products/nimbus-oauth-openid-connect-sdk
+.. _Nimbus client: http://connect2id.com/products/nimbus-oauth-openid-connect-sdk/guides/java-cookbook-for-openid-connect-public-clients
 .. _mod_auth_openidc: https://github.com/pingidentity/mod_auth_openidc
+.. _mod_auth_openidc config: https://github.com/pingidentity/mod_auth_openidc/wiki
