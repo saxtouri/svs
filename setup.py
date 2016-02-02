@@ -28,7 +28,7 @@ class install(install_):
 
 
 setup(name='svs',
-      version='0.1.0',
+      version='0.1.4',
       description='The InAcademia Simple validation Service allows for the easy validation of affiliation (Student,'
                   'Faculty, Staff) of a user in Academia',
       license='Apache 2.0',
