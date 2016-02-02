@@ -4,14 +4,15 @@ import os
 import urllib
 
 import cherrypy
-from oic.utils.clientdb import MDQClient
 from oic.utils.keyio import KeyBundle
 from oic.utils.webfinger import WebFinger, OIC_ISSUER
 from saml2.response import DecryptionFailed
 from saml2 import BINDING_HTTP_POST, BINDING_HTTP_REDIRECT
 
 from svs.cherrypy_util import PathDispatcher, response_to_cherrypy
-from svs.message_utils import abort_with_client_error, abort_with_enduser_error, negative_transaction_response
+from svs.client_db import ClientDB
+from svs.message_utils import abort_with_client_error, abort_with_enduser_error, \
+    negative_transaction_response
 from svs.oidc import InAcademiaOpenIDConnectFrontend
 from svs.saml import InAcademiaSAMLBackend
 from svs.user_interaction import ConsentPage, EndUserErrorResponse
@@ -19,11 +20,11 @@ from svs.i18n_tool import ugettext as _
 from svs.log_utils import log_transaction_start
 from svs.utils import deconstruct_state, construct_state
 
-
 logger = logging.getLogger(__name__)
 
 
-def setup_logging(config_dict=None, env_key="LOG_CFG", config_file="conf/logging_conf.json", level=logging.INFO):
+def setup_logging(config_dict=None, env_key="LOG_CFG", config_file="conf/logging_conf.json",
+                  level=logging.INFO):
     """Setup logging configuration.
 
     The configuration is fetched in order from:
@@ -52,12 +53,16 @@ def main():
     import pkg_resources
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mdx", dest="mdx", required=True, type=str, help="base url to the MDX server")
-    parser.add_argument("--cdb", dest="cdb", required=True, type=str, help="base url to the client database server")
-    parser.add_argument("--disco", dest="disco_url", type=str, help="base url to the discovery server")
+    parser.add_argument("--mdx", dest="mdx", required=True, type=str,
+                        help="base url to the MDX server")
+    parser.add_argument("--cdb", dest="cdb", required=True, type=str,
+                        help="path to the client metadata file")
+    parser.add_argument("--disco", dest="disco_url", type=str,
+                        help="base url to the discovery server")
     parser.add_argument("-b", dest="base", required=True, type=str, help="base url for the service")
     parser.add_argument("-H", dest="host", default="0.0.0.0", type=str, help="host for the service")
-    parser.add_argument("-p", dest="port", default=8087, type=int, help="port for the service to listen on")
+    parser.add_argument("-p", dest="port", default=8087, type=int,
+                        help="port for the service to listen on")
 
     args = parser.parse_args()
 
@@ -73,8 +78,8 @@ def main():
     SP = InAcademiaSAMLBackend(base_url, args.mdx, args.disco_url)
 
     # ============== OIDC ===============
-    ClientDB = MDQClient(args.cdb)
-    OP = InAcademiaOpenIDConnectFrontend(base_url, ClientDB)
+    client_db = ClientDB(args.cdb)
+    OP = InAcademiaOpenIDConnectFrontend(base_url, client_db)
 
     # ============== Web server ===============
     inacademia = InAcademiaMediator(base_url, OP, SP)
@@ -103,7 +108,8 @@ def main():
         },
         "/robots.txt": {
             "tools.staticfile.on": True,
-            "tools.staticfile.filename": pkg_resources.resource_filename("svs", "site/static/robots.txt"),
+            "tools.staticfile.filename": pkg_resources.resource_filename("svs",
+                                                                         "site/static/robots.txt"),
         },
         "/webroot": {
             "tools.staticdir.on": True,
@@ -137,7 +143,9 @@ def main():
     })
     print("SvS core listening on {}:{}".format(args.host, args.port))
 
-    cherrypy.engine.signal_handler.subscribe()
+    cherrypy.engine.signal_handler.set_handler("SIGTERM", cherrypy.engine.signal_handler.bus.exit)
+    cherrypy.engine.signal_handler.set_handler("SIGUSR1", client_db.update)
+
     cherrypy.engine.start()
     cherrypy.engine.block()
 
@@ -180,7 +188,6 @@ class InAcademiaMediator(object):
                               transaction_session["scope"],
                               transaction_session["redirect_uri"])
         return self.sp.redirect_to_auth(state, transaction_session["scope"])
-
 
     @cherrypy.expose
     def disco(self, state=None, entityID=None, **kwargs):
@@ -245,7 +252,8 @@ class InAcademiaMediator(object):
         state = json.loads(urllib.unquote_plus(state))
         released_claims = json.loads(urllib.unquote_plus(released_claims))
         transaction_session = self._decode_state(state["state"])
-        return self.op.id_token(released_claims, state["idp_entity_id"], state["state"], transaction_session)
+        return self.op.id_token(released_claims, state["idp_entity_id"], state["state"],
+                                transaction_session)
 
     def consent_deny(self, state=None, released_claims=None):
         """Where the denied consent arrives.
@@ -275,7 +283,8 @@ class InAcademiaMediator(object):
         released_claims = json.loads(urllib.unquote_plus(released_claims))
 
         client_name = self._get_client_name(rp_client_id)
-        return ConsentPage.render(client_name, state["idp_entity_id"], released_claims, state["state"])
+        return ConsentPage.render(client_name, state["idp_entity_id"], released_claims,
+                                  state["state"])
 
     def acs_post(self, SAMLResponse=None, RelayState=None, **kwargs):
         """Where the SAML Authentication Response arrives.
@@ -296,11 +305,13 @@ class InAcademiaMediator(object):
         :return: HTML of the OP consent page.
         """
         transaction_session = self._decode_state(RelayState)
-        user_id, affiliation, identity, auth_time, idp_entity_id = self.sp.acs(SAMLResponse, binding, RelayState,
-                                                                  transaction_session)
+        user_id, affiliation, identity, auth_time, idp_entity_id = self.sp.acs(SAMLResponse,
+                                                                               binding, RelayState,
+                                                                               transaction_session)
 
         # if we have passed all checks, ask the user for consent before finalizing
-        released_claims = self.op.get_claims_to_release(user_id, affiliation, identity, auth_time, idp_entity_id,
+        released_claims = self.op.get_claims_to_release(user_id, affiliation, identity, auth_time,
+                                                        idp_entity_id,
                                                         self.sp.metadata, transaction_session)
 
         client_name = self._get_client_name(transaction_session["client_id"])
@@ -331,9 +342,10 @@ class InAcademiaMediator(object):
             return deconstruct_state(state, self.key_bundle.keys())
         except DecryptionFailed as e:
             abort_with_enduser_error(state, "-", cherrypy.request, logger,
-                                     _("We could not complete your validation because an error occurred while handling "
-                                       "your request. Please return to the service which initiated the validation "
-                                       "request and try again."),
+                                     _(
+                                         "We could not complete your validation because an error occurred while handling "
+                                         "your request. Please return to the service which initiated the validation "
+                                         "request and try again."),
                                      "Transaction state missing or broken in incoming response.")
 
     def _encode_state(self, payload):
@@ -349,7 +361,11 @@ class InAcademiaMediator(object):
 
         :return: the clients display name, or client_id if no display name is known.
         """
-        return self.op.OP.cdb[client_id].get("display_name", client_id)
+        try:
+            client_info = self.op.OP.cdb[client_id]
+            return client_info.get("display_name", client_id)
+        except KeyError as e:
+            return client_id
 
 
 if __name__ == '__main__':

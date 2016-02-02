@@ -96,15 +96,11 @@ class InAcademiaOpenIDConnectFrontend(object):
             try:
                 cinfo = self.OP.cdb[transaction_session["client_id"]]
                 _ruri = cinfo["redirect_uris"][0]
-            except NoClientInfoReceivedError as e:
+            except KeyError as e:
                 abort_with_enduser_error(transaction_id, transaction_session["client_id"], cherrypy.request, logger,
                                          _error_msg,
                                          "Unknown RP client id '{}': '{}'.".format(transaction_session["client_id"],
                                                                                    str(e)))
-            except requests.exceptions.RequestException as e:
-                abort_with_enduser_error("-", transaction_session["client_id"], cherrypy.request, logger,
-                                         _error_msg,
-                                         "Failed to get client metadata from MDQ server.", exc_info=True)
 
         location = authzresp.request(_ruri, True)
         logger.debug("Redirected to: '{}' ({})".format(location, type(location)))
@@ -130,7 +126,12 @@ class InAcademiaOpenIDConnectFrontend(object):
             return False
 
         # Verify the client is allowed to request this scope
-        allowed = self.OP.cdb[client_id].get("allowed_scope_values", [])
+        try:
+            client_info = self.OP.cdb[client_id]
+            allowed = client_info.get("allowed_scope_values", [])
+        except KeyError as e:
+            allowed = []
+
         for value in scope:
             if value == "openid":  # Always allow 'openid' in scope
                 continue
@@ -162,27 +163,23 @@ class InAcademiaOpenIDConnectFrontend(object):
         _error_msg = _("Configuration error for the service.")
 
         try:
-            cinfo = self.OP.cdb[client_id]
-        except NoClientInfoReceivedError as e:
+            client_info = self.OP.cdb[client_id]
+        except KeyError as e:
             abort_with_enduser_error("-", client_id, cherrypy.request, logger,
                                      _error_msg,
                                      "Unknown RP client id '{}': '{}'.".format(client_id, str(e)))
-        except requests.exceptions.RequestException as e:
-            abort_with_enduser_error("-", client_id, cherrypy.request, logger,
-                                     _error_msg,
-                                     "Failed to get client metadata from MDQ server.", exc_info=True)
 
         # verify that the redirect_uri is sound
         if "redirect_uri" not in areq:
             abort_with_enduser_error("-", client_id, cherrypy.request, logger,
                                      _error_msg,
                                      "Missing redirect URI in authentication request.")
-        elif areq["redirect_uri"] not in cinfo["redirect_uris"]:
+        elif areq["redirect_uri"] not in client_info["redirect_uris"]:
             abort_with_enduser_error("-", client_id, cherrypy.request, logger,
                                      _error_msg,
                                      "Unknown redirect URI in authentication request: '{}' not in '{}'".format(
                                          areq["redirect_uri"],
-                                         cinfo["redirect_uris"]))
+                                         client_info["redirect_uris"]))
 
         # Create the state variable
         transaction_session = {
@@ -258,7 +255,12 @@ class InAcademiaOpenIDConnectFrontend(object):
         """
 
         # Verify the client is allowed to request these claims
-        allowed = self.OP.cdb[client_id].get("allowed_claims", [])
+        try:
+            client_info = self.OP.cdb[client_id]
+            allowed = client_info.get("allowed_claims", [])
+        except KeyError as e:
+            allowed = []
+
         for value in requested_claims:
             if value not in allowed:
                 log_internal(logger, "Claim '{}' not in '{}' for client.".format(value, allowed), None,

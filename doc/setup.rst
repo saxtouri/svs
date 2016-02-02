@@ -24,7 +24,7 @@ To start a container from the image::
     docker run -d --name svs -v <host data dir>:<container data dir> -w <container data dir> [-p 8087:8087] \
         -e BASE=<base url of service> \
         -e MDX=<url of the (SAML) mdx service> \
-        -e CDB=<url of the (OIDC) client db service> \
+        -e CDB=<path to the client metadata file> \
         -e DISCO=<url of the discovery service> \
         <image name>
 
@@ -85,7 +85,7 @@ The InAcademia software supports the following options::
     optional arguments:
       -h, --help         show this help message and exit
       --mdx MDX          base url to the MDX server
-      --cdb CDB          base url to the client database server
+      --cdb CDB          path to the client metadata file
       --disco DISCO_URL  base url to the discovery server
       -b BASE            base url for the service
       -H HOST            host for the service
