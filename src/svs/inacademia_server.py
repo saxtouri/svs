@@ -97,7 +97,7 @@ def main():
         "log.error_file": "svs_error.log",
     })
 
-    cherrypy.config.update({'engine.autoreload_on': False})
+    cherrypy.config.update({'engine.autoreload.on': False})
 
     cherrypy.server.socket_host = args.host
     cherrypy.server.socket_port = args.port
