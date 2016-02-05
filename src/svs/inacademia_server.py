@@ -79,6 +79,7 @@ def main():
 
     # ============== OIDC ===============
     client_db = ClientDB(args.cdb)
+    client_db.update()
     OP = InAcademiaOpenIDConnectFrontend(base_url, client_db)
 
     # ============== Web server ===============
