@@ -63,7 +63,12 @@ setup(name='svs',
           'install': install,
           'compile_all_catalogs': compile_all_catalogs
       },
-      setup_requires=['Babel'],
-      install_requires=['Babel', 'oic>=0.7.8'],
+      install_requires=[
+          'Babel',
+          'pyjwkest',
+          'oic>=0.7.8',
+          'pysaml2',
+          'cherrypy'
+      ],
       tests_require=['pytest', 'mock'],
 )
