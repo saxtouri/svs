@@ -12,36 +12,12 @@
             "level": "DEBUG",
             "formatter": "message_only",
             "stream": "ext://sys.stdout"
-        },
-        "transaction_handler": {
-            "class": "logging.FileHandler",
-            "level": "INFO",
-            "formatter": "message_only",
-            "filename": "svs_transactions.log",
-            "encoding": "utf8"
-        },
-        "tech_handler": {
-            "class": "logging.FileHandler",
-            "level": "DEBUG",
-            "formatter": "message_only",
-            "filename": "svs_tech.log",
-            "encoding": "utf8"
         }
     },
     "loggers": {
-        "svs.inacademia_server": {
+        "svs": {
             "level": "DEBUG",
-            "handlers": ["console", "transaction_handler", "tech_handler"],
-            "propagate": false
-        },
-        "svs.saml": {
-            "level": "DEBUG",
-            "handlers": ["console", "tech_handler"],
-            "propagate": false
-        },
-        "svs.oidc": {
-            "level": "DEBUG",
-            "handlers": ["console", "tech_handler"],
+            "handlers": ["console"],
             "propagate": false
         }
     },
