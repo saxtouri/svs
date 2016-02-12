@@ -162,7 +162,8 @@ class SamlSp(object):
         # append it to the disco server URL
         loc = self.sp.create_discovery_service_request(
             self.disco_srv, eid, **{"return": ret})
-
+        log_internal(logger, "Discovery service URL: {}".format(self.disco_srv), cherrypy.request,
+                     state)
         return loc
 
     def redirect_to_auth(self, metadata, entity_id, relay_state):

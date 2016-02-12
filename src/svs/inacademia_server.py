@@ -17,7 +17,7 @@ from svs.oidc import InAcademiaOpenIDConnectFrontend
 from svs.saml import InAcademiaSAMLBackend
 from svs.user_interaction import ConsentPage, EndUserErrorResponse
 from svs.i18n_tool import ugettext as _
-from svs.log_utils import log_transaction_start
+from svs.log_utils import log_transaction_start, log_internal
 from svs.utils import deconstruct_state, construct_state
 
 logger = logging.getLogger(__name__)
@@ -92,9 +92,6 @@ def main():
         "tools.I18nTool.default": "en",
         "tools.I18nTool.mo_dir": pkg_resources.resource_filename("svs", "data/i18n/locales"),
         "tools.I18nTool.domain": "messages",
-
-        "log.access_file": "svs_access.log",
-        "log.error_file": "svs_error.log",
     })
 
     cherrypy.config.update({'engine.autoreload.on': False})
@@ -142,7 +139,6 @@ def main():
             })
         }
     })
-    print("SvS core listening on {}:{}".format(args.host, args.port))
 
     cherrypy.engine.signal_handler.set_handler("SIGTERM", cherrypy.engine.signal_handler.bus.exit)
     cherrypy.engine.signal_handler.set_handler("SIGUSR1", client_db.update)
@@ -253,6 +249,8 @@ class InAcademiaMediator(object):
         state = json.loads(urllib.unquote_plus(state))
         released_claims = json.loads(urllib.unquote_plus(released_claims))
         transaction_session = self._decode_state(state["state"])
+        log_internal(logger, "consented claims: {}".format(json.dumps(released_claims)),
+                     cherrypy.request, state["state"], transaction_session["client_id"])
         return self.op.id_token(released_claims, state["idp_entity_id"], state["state"],
                                 transaction_session)
 
@@ -314,6 +312,8 @@ class InAcademiaMediator(object):
         released_claims = self.op.get_claims_to_release(user_id, affiliation, identity, auth_time,
                                                         idp_entity_id,
                                                         self.sp.metadata, transaction_session)
+        log_internal(logger, "claims to consent: {}".format(json.dumps(released_claims)),
+                     cherrypy.request, RelayState, transaction_session["client_id"])
 
         client_name = self._get_client_name(transaction_session["client_id"])
         return ConsentPage.render(client_name, idp_entity_id, released_claims, RelayState)
@@ -344,9 +344,9 @@ class InAcademiaMediator(object):
         except DecryptionFailed as e:
             abort_with_enduser_error(state, "-", cherrypy.request, logger,
                                      _(
-                                         "We could not complete your validation because an error occurred while handling "
-                                         "your request. Please return to the service which initiated the validation "
-                                         "request and try again."),
+                                             "We could not complete your validation because an error occurred while handling "
+                                             "your request. Please return to the service which initiated the validation "
+                                             "request and try again."),
                                      "Transaction state missing or broken in incoming response.")
 
     def _encode_state(self, payload):
