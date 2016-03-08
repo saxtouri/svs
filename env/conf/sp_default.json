@@ -74,6 +74,8 @@
 
         }
     },
+    "key_file" : "inAcademia",
+    "cert_file" : "inAcademia.pub",
     "organization": {
         "name": [
             ["InAcademia", "en"]
@@ -85,7 +87,6 @@
             ["https://inacademia.org/about", "en"]
         ]
     },
-
     "contact_person": [
         {
             "given_name": "InAcademia",
