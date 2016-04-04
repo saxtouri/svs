@@ -1,4 +1,4 @@
-# Northern Sami translations for InAcademia.
+# Dutch translation for InAcademia.
 # Copyright (C) 2014 ORGANIZATION
 # This file is distributed under the same license as the InAcademia project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2014.
