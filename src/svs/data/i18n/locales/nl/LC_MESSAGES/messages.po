@@ -1,0 +1,103 @@
+# Dutch translation for InAcademia.
+# Copyright (C) 2014 ORGANIZATION
+# This file is distributed under the same license as the InAcademia project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2014.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: InAcademia 0.1.0\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2015-03-11 09:40+0100\n"
+"PO-Revision-Date: 2016-04-04 16:21+0100\n"
+"Last-Translator: Niels van Dijk <niels.vandijk@surfnet.nl>\n"
+"Language-Team: InAcademia <tech@inacademia.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.3\n"
+"X-Generator: Poedit 1.5.4\n"
+
+#: src/svs/inacademia_server.py:194 src/svs/inacademia_server.py:211
+#: src/svs/inacademia_server.py:247 src/svs/inacademia_server.py:260
+#: src/svs/inacademia_server.py:273
+msgid "Page not found."
+msgstr "Pagina niet gevonden"
+
+#: src/svs/inacademia_server.py:344
+msgid "Domain"
+msgstr "Domein"
+
+#: src/svs/inacademia_server.py:349
+msgid "Country"
+msgstr "Land"
+
+#: src/svs/inacademia_server.py:373
+msgid "Affiliation"
+msgstr "Affiliation"
+
+#: src/svs/inacademia_server.py:373
+msgid "Identifier"
+msgstr "Identifier"
+
+#: src/svs/inacademia_server.py:373
+msgid "Authentication time"
+msgstr "Tijdstip van authenticatie"
+
+#: src/svs/inacademia_server.py:410 src/svs/oidc.py:92
+msgid ""
+"We could not complete your validation because an error occurred while "
+"handling your request. Please return to the service which initiated the "
+"validation request and try again."
+msgstr ""
+"Er is een fout opgetreden tijdens het afhandelen van uw verzoek, waardoor "
+"wij de validatie niet konden afronden. Keer terug naar de dienst vanaf waar "
+"u de validatie startte en probeer het opnieuw."
+
+#: src/svs/oidc.py:154
+msgid ""
+"The authentication request could not be processed. Please return to the "
+"service which initiated the validation request and try again."
+msgstr ""
+"Het authenticatie verzoek kon niet worden afgehandeld. Keer terug naar de "
+"dienst vanaf waar u de validatie startte en probeer het opnieuw."
+
+#: src/svs/oidc.py:161
+msgid "Configuration error for the service."
+msgstr "Configuratie fout voor de dienst"
+
+#: src/svs/user_interaction.py:49
+msgid "{client_name} requires the information below to be transferred:"
+msgstr "{client_name} vraagt om de onderstaande informatie:"
+
+#: src/svs/templates/consent.mako:38
+msgid "Consent - Your consent is required to continue."
+msgstr "Toestemming - uw toestemming is nodig om verder te kunnen gaan."
+
+#: src/svs/templates/consent.mako:61
+msgid "Ok, accept"
+msgstr "Ok, accepteren"
+
+#: src/svs/templates/consent.mako:66
+msgid "No, cancel"
+msgstr "Nee, stoppen"
+
+#: src/svs/templates/consent.mako:81 src/svs/templates/error.mako:68
+msgid "Terms of service"
+msgstr "Gebruiksvoorwaarden"
+
+#: src/svs/templates/error.mako:26
+msgid "Error - An error occurred."
+msgstr "Error - er is een fout opgetreden"
+
+#: src/svs/templates/error.mako:44
+msgid "message"
+msgstr ""
+
+#: src/svs/templates/error.mako:53
+msgid "Timestamp"
+msgstr "Timestamp"
+
+#: src/svs/templates/error.mako:58
+msgid "Error id"
+msgstr "Error id"
