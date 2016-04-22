@@ -16,7 +16,7 @@ def abort_with_enduser_error(transaction_id, client_id, environ, logger,
     """
     t, uid = _log_fail(logger, log_msg, transaction_id, client_id, environ,
                        **kwargs)
-    raise EndUserErrorResponse(t, uid, error_message)
+    raise EndUserErrorResponse(t, uid, log_msg)
 
 
 def abort_with_client_error(transaction_id, transaction_session, environ,
