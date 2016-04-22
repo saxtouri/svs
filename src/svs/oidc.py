@@ -167,7 +167,7 @@ class InAcademiaOpenIDConnectFrontend(object):
         except KeyError as e:
             abort_with_enduser_error("-", client_id, cherrypy.request, logger,
                                      _error_msg,
-                                     "Unknown RP client id '{}': '{}'.".format(client_id, str(e)))
+                                     "Unknown RP client id '{}'.".format(client_id))
 
         # verify that the redirect_uri is sound
         if "redirect_uri" not in areq:
