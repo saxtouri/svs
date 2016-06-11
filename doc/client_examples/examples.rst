@@ -217,7 +217,6 @@ Configuration
     <VirtualHost _default_:*>
         OIDCProviderMetadataURL <inacademia url>/.well-known/openid-configuration
         OIDCClientID <client id>
-        OIDCClientSecret <client secret>
         OIDCRedirectURI https://<hostname>:<port>/protected/authz_cb
         OIDCResponseType id_token
         OIDCScope "openid student" # request verification of student affiliation
