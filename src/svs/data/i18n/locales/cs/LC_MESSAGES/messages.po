@@ -1,0 +1,99 @@
+# Czech translations for InAcademia.
+# Copyright (C) 2014 ORGANIZATION
+# This file is distributed under the same license as the InAcademia project.
+# Slavek Licehammer <slavek@ics.muni.cz>, 2016.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: InAcademia 0.1.0\n"
+"Report-Msgid-Bugs-To: tech@inacademia.org\n"
+"Last-Translator: Slávek Licehammer <slavek@ics.muni.cz>\n"
+"Language-Team: InAcademia <tech@inacademia.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/svs/inacademia_server.py:194 src/svs/inacademia_server.py:211
+#: src/svs/inacademia_server.py:247 src/svs/inacademia_server.py:260
+#: src/svs/inacademia_server.py:273
+msgid "Page not found."
+msgstr "Stránka nenalezena"
+
+#: src/svs/inacademia_server.py:344
+msgid "Domain"
+msgstr "Doména"
+
+#: src/svs/inacademia_server.py:349
+msgid "Country"
+msgstr "Země"
+
+#: src/svs/inacademia_server.py:373
+msgid "Affiliation"
+msgstr "Příslušnost"
+
+#: src/svs/inacademia_server.py:373
+msgid "Identifier"
+msgstr "Identifikátor"
+
+#: src/svs/inacademia_server.py:373
+msgid "Authentication time"
+msgstr "Čas přihlášení"
+
+#: src/svs/inacademia_server.py:410 src/svs/oidc.py:92
+msgid ""
+"We could not complete your validation because an error occurred while "
+"handling your request. Please return to the service which initiated the "
+"validation request and try again."
+msgstr ""
+"Nemohli jsme dokončit vaše ověření, protože při zpracování vašeho požadavku "
+"nastala chyba. Vraťte se prosím na stránku služby, ze které jste spustili "
+"validaci a zkuste začít znovu."
+
+#: src/svs/oidc.py:154
+msgid ""
+"The authentication request could not be processed. Please return to the "
+"service which initiated the validation request and try again."
+msgstr ""
+"Při přihlášení nastala chyba. Vraťte se prosím na stránku služby, "
+"ze které jste spustili validaci a zkuste začít znovu."
+
+#: src/svs/oidc.py:161
+msgid "Configuration error for the service."
+msgstr "Chyba v nastavení služby."
+
+#: src/svs/user_interaction.py:49
+msgid "{client_name} requires the information below to be transferred:"
+msgstr "{client_name} žádá o přenos následujících informací:"
+
+#: src/svs/templates/consent.mako:38
+msgid "Consent - Your consent is required to continue."
+msgstr "Odsouhlasení - Pro pokračování je nutný souhlas."
+
+#: src/svs/templates/consent.mako:61
+msgid "Ok, accept"
+msgstr "Ok, souhlasím"
+
+#: src/svs/templates/consent.mako:66
+msgid "No, cancel"
+msgstr "Ne, zrušit"
+
+#: src/svs/templates/consent.mako:81 src/svs/templates/error.mako:68
+msgid "Terms of service"
+msgstr "Podmínky použití"
+
+#: src/svs/templates/error.mako:26
+msgid "Error - An error occurred."
+msgstr "Chyba - Vyskytla se chyba."
+
+#: src/svs/templates/error.mako:44
+msgid "message"
+msgstr "zpráva"
+
+#: src/svs/templates/error.mako:53
+msgid "Timestamp"
+msgstr "Časové razítko"
+
+#: src/svs/templates/error.mako:58
+msgid "Error id"
+msgstr "Číslo chyby"
