@@ -29,8 +29,10 @@
                 <form action="${form_action}" method="POST">
                     <select name="lang" id="lang" onchange="this.form.submit()" class="dropdown-menu-right">
                         <option value="en">EN</option>
-                        <option value="sv">SV</option>
+                        <option value="el">EL</option>
+                        <option value="fr">FR</option>
                         <option value="nl">NL</option>
+                        <option value="sv">SV</option>
                     </select>
                     <%block name="extra_inputs"></%block>
                 </form>
