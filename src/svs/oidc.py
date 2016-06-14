@@ -45,7 +45,7 @@ class InAcademiaOpenIDConnectFrontend(object):
         try:
             file_name = "static/jwks.json"
             dump_jwks([kb], file_name)
-            self.OP.jwks_uri.append("{}/{}".format(base_url, file_name))
+            self.OP.capabilities["jwks_uri"] = "{}/{}".format(base_url, file_name)
         except Exception as e:
             logger.exception("Signing and encryption keys could not be written to jwks.json.")
             raise

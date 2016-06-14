@@ -235,8 +235,9 @@ class InAcademiaMediator(object):
 
         This function is mapped explicitly using PathDispatcher.
         """
-
-        return response_to_cherrypy(self.op.OP.providerinfo_endpoint())
+        cherrypy.response.headers["Content-Type"] = "application/json"
+        cherrypy.response.headers["Cache-Control"] = "no-store"
+        return self.op.OP.capabilities.to_json()
 
     def consent_allow(self, state=None, released_claims=None):
         """Where the approved consent arrives.
