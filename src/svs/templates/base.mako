@@ -31,6 +31,7 @@
                         <option value="en">EN</option>
                         <option value="el">EL</option>
                         <option value="fr">FR</option>
+                        <option value="hu">HU</option>
                         <option value="nl">NL</option>
                         <option value="sv">SV</option>
                     </select>
