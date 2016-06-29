@@ -30,6 +30,7 @@
                     <select name="lang" id="lang" onchange="this.form.submit()" class="dropdown-menu-right">
                         <option value="en">EN</option>
                         <option value="cs">CS</option>
+                        <option value="da">DA</option>
                         <option value="el">EL</option>
                         <option value="fr">FR</option>
                         <option value="hu">HU</option>
