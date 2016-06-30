@@ -34,11 +34,11 @@ msgstr "Afiliação"
 
 #: src/svs/inacademia_server.py:373
 msgid "Identifier"
-msgstr "Identificador  "
+msgstr "Identificador"
 
 #: src/svs/inacademia_server.py:373
 msgid "Authentication time"
-msgstr "Tempo de autenticação "
+msgstr "Data e hora de autenticação"
 
 #: src/svs/inacademia_server.py:410 src/svs/oidc.py:92
 msgid ""
