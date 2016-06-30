@@ -37,6 +37,7 @@
                         <option value="lt">LT</option>
                         <option value="nl">NL</option>
                         <option value="pt">PT</option>
+                        <option value="ru">RU</option>
                         <option value="sv">SV</option>
                     </select>
                     <%block name="extra_inputs"></%block>
