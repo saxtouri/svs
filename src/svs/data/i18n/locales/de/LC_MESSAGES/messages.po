@@ -1,0 +1,103 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: svs 0.1.0\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2016-07-04 16:21+0200\n"
+"PO-Revision-Date: 2016-07-04 16:27+0200\n"
+"Language-Team: InAcademia <tech@inacademia.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.3\n"
+"X-Generator: Poedit 1.8.8\n"
+"Last-Translator: Thomas Baerecke <thomas.baerecke@switch.ch>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: de_DE\n"
+
+#: src/svs/inacademia_server.py:194 src/svs/inacademia_server.py:211
+#: src/svs/inacademia_server.py:247 src/svs/inacademia_server.py:260
+#: src/svs/inacademia_server.py:273
+msgid "Page not found."
+msgstr "Seite nicht gefunden."
+
+#: src/svs/inacademia_server.py:344
+msgid "Domain"
+msgstr "Domain"
+
+#: src/svs/inacademia_server.py:349
+msgid "Country"
+msgstr "Land"
+
+#: src/svs/inacademia_server.py:373
+msgid "Affiliation"
+msgstr "Zugehörigkeit"
+
+#: src/svs/inacademia_server.py:373
+msgid "Identifier"
+msgstr "Eindeutiger Schlüssel"
+
+#: src/svs/inacademia_server.py:373
+msgid "Authentication time"
+msgstr "Authentisierungszeit"
+
+#: src/svs/inacademia_server.py:410 src/svs/oidc.py:92
+msgid ""
+"We could not complete your validation because an error occurred while "
+"handling your request. Please return to the service which initiated the "
+"validation request and try again."
+msgstr ""
+"Wir konnten Ihre Validieren nicht abschliessen, weil ein Fehler bei der "
+"Verarbeitung Ihrer Anfrage aufgetreten ist. Bitte kehren Sie zu dem "
+"Dienst zurück, der die Validierungsanfrage initiiert hat und versuchen "
+"Sie es erneut."
+
+#: src/svs/oidc.py:154
+msgid ""
+"The authentication request could not be processed. Please return to the "
+"service which initiated the validation request and try again."
+msgstr ""
+"Die Authentisierungsanfrage konnte nicht verarbeitet werden. Bitte "
+"kehren Sie zu dem Dienst zurück, der die Validierungsanfrage initiiert "
+"hat und versuchen Sie es erneut."
+
+#: src/svs/oidc.py:161
+msgid "Configuration error for the service."
+msgstr "Fehlerhafte Konfiguration des Dienstes."
+
+#: src/svs/user_interaction.py:49
+msgid "{client_name} requires the information below to be transferred:"
+msgstr ""
+"{client_name} benötigt die Übermittlung der folgenden Informationen:"
+
+#: src/svs/templates/consent.mako:38
+msgid "Consent - Your consent is required to continue."
+msgstr ""
+"Einverständnis - Ihr Einverständnis ist notwendig um fortzufahren."
+
+#: src/svs/templates/consent.mako:61
+msgid "Ok, accept"
+msgstr "Ja, akzeptieren"
+
+#: src/svs/templates/consent.mako:66
+msgid "No, cancel"
+msgstr "Nein, abbrechen"
+
+#: src/svs/templates/consent.mako:81 src/svs/templates/error.mako:68
+msgid "Terms of service"
+msgstr "Bedingungen des Dienstes"
+
+#: src/svs/templates/error.mako:26
+msgid "Error - An error occurred."
+msgstr "Fehler - Ein Fehler ist aufgetreten."
+
+#: src/svs/templates/error.mako:44
+msgid "message"
+msgstr "Nachricht"
+
+#: src/svs/templates/error.mako:53
+msgid "Timestamp"
+msgstr "Zeitpunkt"
+
+#: src/svs/templates/error.mako:58
+msgid "Error id"
+msgstr "Fehlernummer"
