@@ -58,4 +58,4 @@ class ConsentPage(object):
                                                         released_claims=released_claims,
                                                         state=state,
                                                         form_action=form_action,
-                                                        language=cherrypy.response.i18n.locale.language)
+                                                        language=cherrypy.response.i18n.locale)

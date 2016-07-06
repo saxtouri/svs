@@ -175,12 +175,11 @@ def load_translation(langs, dirname, domain):
     """
     locale = None
     for lang in langs:
-        short = lang[:2].lower()
         try:
             locale = Locale.parse(lang)
-            if (domain, short) in _languages:
-                return _languages[(domain, short)]
-            trans = Translations.load(dirname, short, domain)
+            if (domain, lang) in _languages:
+                return _languages[(domain, lang)]
+            trans = Translations.load(dirname, lang, domain)
         except (ValueError, UnknownLocaleError):
             continue
         # If the translation was found, exit loop
@@ -188,7 +187,7 @@ def load_translation(langs, dirname, domain):
             break
     if locale is None:
         raise ImproperlyConfigured('Default locale not known.')
-    _languages[(domain, short)] = res = Lang(locale, trans)
+    _languages[(domain, lang)] = res = Lang(locale, trans)
     return res
 
 
