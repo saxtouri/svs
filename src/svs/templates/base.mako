@@ -33,6 +33,7 @@
                         <option value="da">DA</option>
                         <option value="de">DE</option>
                         <option value="el">EL</option>
+                        <option value="es_419">ES</option>
                         <option value="fr">FR</option>
                         <option value="hu">HU</option>
                         <option value="lt">LT</option>
