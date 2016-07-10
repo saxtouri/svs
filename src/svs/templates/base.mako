@@ -28,6 +28,7 @@
             <div class="col-md-1">
                 <form action="${form_action}" method="POST">
                     <select name="lang" id="lang" onchange="this.form.submit()" class="dropdown-menu-right">
+                        <option value="af">AF</option>
                         <option value="en">EN</option>
                         <option value="cs">CS</option>
                         <option value="da">DA</option>
