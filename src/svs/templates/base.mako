@@ -35,6 +35,7 @@
                         <option value="de">DE</option>
                         <option value="el">EL</option>
                         <option value="es_419">ES</option>
+                        <option value="et">ET</option>
                         <option value="fr">FR</option>
                         <option value="hu">HU</option>
                         <option value="lt">LT</option>
