@@ -4,4 +4,4 @@ dist/
 *.egg-info
 doc/_*
 *.log
-*.mo
+.tox/

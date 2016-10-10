@@ -1,0 +1,13 @@
+attributes:
+  affiliation:
+    saml: [eduPersonAffiliation]
+    openid: [affiliation]
+  domain:
+    saml: [schacHomeOrganization]
+    openid: [domain]
+  edupersontargetedid:
+    saml: [eduPersonTargetedID]
+  edupersonprincipalname:
+    saml: [eduPersonPrincipalName]
+  authtime:
+    openid: [auth_time]

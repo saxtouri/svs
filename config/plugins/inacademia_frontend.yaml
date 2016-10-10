@@ -1,0 +1,5 @@
+module: svs.inacademia_frontend.InAcademiaFrontend
+name: InAcademia
+config:
+  signing_key_path: pki/frontend.key
+  client_db_path: clients.json
