@@ -1,0 +1,23 @@
+{
+  "client1": {
+    "redirect_uris": ["http://localhost:8090/authz_cb", "http://localhost:5000/redirect_uri"],
+    "response_types": ["id_token"],
+    "client_name": "Python Test RP Client",
+    "allowed_scope_values": ["student", "persistent", "transient"],
+    "allowed_claims": ["domain"]
+  },
+  "apache": {
+    "redirect_uris": ["https://localhost:8090/protected/authz_cb"],
+    "response_types": ["id_token"],
+    "client_name": "Apahce RP Client",
+    "allowed_scope_values": ["student", "persistent"],
+    "allowed_claims": ["domain"]
+  },
+  "selenium_test": {
+    "redirect_uris": ["http://localhost:9099/auth_callback"],
+    "response_types": ["id_token"],
+    "client_name": "Selenium Client",
+    "allowed_scope_values": ["student", "transient", "persistent"],
+    "allowed_claims": ["domain"]
+  }
+}
