@@ -3,95 +3,132 @@
         # more human-friendly and avoid "u'" prefix for unicode strings in list
         if isinstance(claim, list):
             claim = ", ".join(claim)
+        if claim.startswith('['):
+            claim = claim[1:]
+        if claim.startswith('\''):
+            claim = claim[1:]
+        if claim.endswith(']'):
+            claim = claim[:-1]
+        if claim.endswith('\''):
+            claim = claim[:-1]
         return claim
 %>
 
-<!DOCTYPE html>
+<%inherit file="base.mako"/>
 
-<html>
-<head>
-    <title>InAcademia Consent</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="content-type" content="text/html;" charset="utf-8"/>
+<%block name="head_title">InAcademia Consent</%block>
+<%block name="page_header">${_("Your consent is required to continue.")}</%block>
+<%block name="extra_inputs">
+  <input type="hidden" name="state" value="${ state }">
+</%block>
+<%block name="footer">
+  <a href="https://www.inacademia.org">InAcademia</a> |
+  <a href="https://www.inacademia.org/eula/">${_("Terms of service")}</a>
+</%block>
 
-    <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/consent.css">
-</head>
-<body>
+## ${_(consent_question)}
 
-<div class="row">
-    <div class="wrapper col-md-8 col-md-offset-2">
-        <div class="title row">
-            <div class="col-md-11">
-                <h1>${_("Consent - Your consent is required to continue.")}</h1>
-            </div>
-            <!-- Language selection -->
-            <div class="col-md-1">
-                <form action="${form_action}" method="POST">
-                    <select name="lang" id="lang" onchange="this.form.submit()" class="dropdown-menu-right">
-                        <option value="af">AF</option>
-                        <option value="en">EN</option>
-                        <option value="cs">CS</option>
-                        <option value="da">DA</option>
-                        <option value="de">DE</option>
-                        <option value="el">EL</option>
-                        <option value="es_419">ES</option>
-                        <option value="et">ET</option>
-                        <option value="fr">FR</option>
-                        <option value="hu">HU</option>
-                        <option value="lt">LT</option>
-                        <option value="nl">NL</option>
-                        <option value="pt">PT</option>
-                        <option value="ru">RU</option>
-                        <option value="sv">SV</option>
-                    </select>
-                </form>
-            </div>
+<div class="list-group">
+    <p class="small">
+      <b>${client_name}</b> 
+      ${_("is about to receive the following information:")}
+    </p>
+    % for attribute in released_claims:
+        <div class="checkbox list-group-item">
+          <h4 class="list-group-item-heading">
+          </h4>
+            <label><input type="checkbox"
+                 name="${attribute.lower()}"
+                 value="${released_claims[attribute] | list2str}"
+                 checked>
+                 &nbsp;<span>${_(attribute).capitalize()}</span>:&nbsp;
+                 <span>${released_claims[attribute] | list2str}</span>
+            </label>
         </div>
+    % endfor
 
-        ${_('{client_name} requires the information below to be transferred:').format(client_name='<strong>' + client_name + '</strong>')}
+    % if locked_claims:
+      <div class="btn btn-link"
+           onclick="$('#locked').toggleClass('hidden');">
+        <h4 class="small">${_("Click here to see what information is stored by InAcadamia as part of this transaction")}</h4>
+        <div class="hidden list-group-item" id="locked">
+        % for attribute in locked_claims:
+          <span> ${_(attribute).capitalize()}</span>:&nbsp;
+          <span>${locked_claims[attribute] | list2str}</span>
+        % endfor
+        </div>
+      </div>
+    % endif
+    <div class="row"><hr/></div>
 
-        <br>
-        <hr>
-
-        <form name="allow_consent" action="${form_action}/allow" method="GET"
-              style="float: left">
-            <button id="submit_ok" type="submit">${_('Ok, accept')}</button>
-        </form>
-        <form name="deny_consent" action="${form_action}/deny" method="GET"
-              style="float: left; clear: right;">
-            <button id="submit_deny" type="submit">${_('No, cancel')}</button>
-        </form>
-
-        <br>
-        <br>
-
-        <div style="clear: both;">
-            % for attribute in released_attributes:
-                <strong>${_(attribute).capitalize()}</strong><br>
-                <pre>    ${released_attributes[attribute] | n, list2str}</pre>
+    <div class="row">
+      <div class="col-md-10">
+        <h5>${_("Data send and stored by InAcademia is subject to our")}
+        <a href="https://inacademia.org/about/privacy" target="_blank">
+          ${_("Privacy Policy")}
+        </a></h5>
+      </div>
+      <div class="col-md-2 aligh-right sp-col-2" style="display: none;">
+        <form name="allow_consent" id="allow_consent_form"
+              action="save_consent" method="GET">
+        <select name="month" id="month">
+            % for month in months:
+                <option value="${month}">
+                    <span>${month}</span> <span> ${_("months")}</span>
+                </option>
             % endfor
-        </div>
-        <br>
-
-        <hr>
-        <footer>
-            <a href="https://www.inacademia.org">InAcademia</a> |
-            <a href="https://www.inacademia.org/eula/">${_("Terms of service")}</a>
-        </footer>
+        </select>
+      </div>
     </div>
+
+    <div class="row clearfix"><br/></div>
+    <div class="btn-block">
+      <input name="Yes" value="${_('OK, accept')}" id="submit_ok"
+             type="submit" class="btn btn-primary">
+      <input name="No" value="${_('No, cancel')}" id="submit_deny"
+             type="submit" class="btn btn-warning">
+     </div>
+      <input type="hidden" id="attributes" name="attributes"/>
+      <input type="hidden" id="consent_status" name="consent_status"/>
+    ${extra_inputs()}
+    </form>
 </div>
 
+<script>
+    $('input:checked').each(function () {
+        if (!${select_attributes.lower()}) {
+            $(this).removeAttr("checked")
+        }
+    });
 
-<script type="application/javascript">
-    "use strict";
+    $('#allow_consent_form').submit(function (ev) {
+        ev.preventDefault(); // to stop the form from submitting
 
-    // Mark the selected language in the dropdown
-    var lang = "${language}";
-    var lang_option = document.querySelector("option[value=" + lang + "]");
-    lang_option.selected = true;
+        var attributes = [];
+        $('input:checked').each(function () {
+            attributes.push(this.name);
+        });
+
+        var consent_status = $('#consent_status');
+
+        var status = $("input[type=submit][clicked=true]").attr("name");
+        consent_status.val(status);
+
+        if (attributes.length == 0) {
+            consent_status.val("No");
+            alert("${_('No attributes where selected which equals no consent where given')}");
+        }
+
+        % for attr in locked_claims:
+            attributes.push("${attr}");
+        % endfor
+        $('#attributes').val(attributes);
+
+        this.submit(); // If all the validations succeeded
+    });
+
+    $("form input[type=submit]").click(function () {
+        $("input[type=submit]", $(this).parents("form")).removeAttr("clicked");
+        $(this).attr("clicked", "true");
+    });
 </script>
-
-</body>
-</html>
